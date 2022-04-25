@@ -10,6 +10,7 @@ pub struct TolokaCredentials {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
+    pub storage_file: String,
     #[serde(flatten)]
     pub toloka: TolokaCredentials,
 }
