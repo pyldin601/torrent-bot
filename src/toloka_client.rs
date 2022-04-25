@@ -81,25 +81,23 @@ impl TolokaClient {
 
         let document = response.text().await?;
         let html = Html::parse_document(&document);
-        let selector = Selector::parse(r#"table.forumline tr td"#).unwrap();
-        let rows = html.select(&selector).into_iter().collect::<Vec<_>>();
 
-        Ok(rows
-            .chunks(6)
-            .into_iter()
-            .filter(|c| c.len() == 6)
-            .map(|c| {
-                let link = c[0]
-                    .select(&Selector::parse("a[href]").unwrap())
-                    .next()
-                    .unwrap();
-                let category = c[1]
-                    .select(&Selector::parse("a[href]").unwrap())
-                    .next()
-                    .unwrap();
+        let table_row_selector = Selector::parse(r#"table.forumline tr"#).unwrap();
+        let table_entries = html.select(&table_row_selector);
+
+        let href_selector = &Selector::parse(r#"a[href]"#).unwrap();
+        let td_selector = &Selector::parse(r#"td"#).unwrap();
+
+        Ok(table_entries
+            .skip(1)
+            .filter(|el| el.children().filter(|el| el.value().is_element()).count() == 6)
+            .map(|el| {
+                let columns = el.select(&td_selector).collect::<Vec<_>>();
+                let link = columns[0].select(&href_selector).next().unwrap();
+                let category = columns[1].select(&href_selector).next().unwrap();
 
                 Topic {
-                    id: link.value().attr("href").unwrap().to_string(),
+                    id: link.value().attr("href").unwrap_or_default().to_string(),
                     category: category.inner_html().to_string(),
                     title: link.inner_html().to_string(),
                 }
