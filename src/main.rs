@@ -4,6 +4,7 @@ use crate::toloka_client::TolokaClient;
 
 mod config;
 mod storage;
+mod sync;
 mod toloka_client;
 
 #[actix_rt::main]

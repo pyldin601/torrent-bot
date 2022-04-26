@@ -7,11 +7,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# transmission-rpc = "0.3.6"
+transmission-rpc = "0.3.6"
 reqwest = { version = "0.11.10", features = ["cookies"] }
 actix-rt = "2.7.0"
 thiserror = "1.0.30"
 serde = { version = "1.0.136", features = ["derive"] }
+serde_json = "1.0.79"
 scraper = "0.13.0"
 dotenv = "0.15.0"
 envy = "0.4.2"
