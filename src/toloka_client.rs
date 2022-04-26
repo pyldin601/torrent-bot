@@ -32,7 +32,7 @@ pub(crate) enum TolokaClientError {
 pub(crate) type TolokaClientResult<T> = Result<T, TolokaClientError>;
 
 #[derive(Debug)]
-pub(crate) struct Topic {
+pub(crate) struct TolokaTopic {
     pub(crate) id: String,
     pub(crate) category: String,
     pub(crate) title: String,
@@ -68,7 +68,7 @@ impl TolokaClient {
         Ok(Self { client })
     }
 
-    pub(crate) async fn get_watched_topics(&self) -> TolokaClientResult<Vec<Topic>> {
+    pub(crate) async fn get_watched_topics(&self) -> TolokaClientResult<Vec<TolokaTopic>> {
         let response = self
             .client
             .get(format!("{}/watched_topics.php", TOLOKA_HOST))
@@ -96,7 +96,7 @@ impl TolokaClient {
                 let link = columns[0].select(&href_selector).next().unwrap();
                 let category = columns[1].select(&href_selector).next().unwrap();
 
-                Topic {
+                TolokaTopic {
                     id: link.value().attr("href").unwrap_or_default().to_string(),
                     category: category.inner_html().to_string(),
                     title: link.inner_html().to_string(),
