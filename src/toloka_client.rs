@@ -140,7 +140,7 @@ impl TolokaClient {
 
                 let category = match category_raw.as_str() {
                     "Фільми" => Category::Movies,
-                    "Серіали" => Category::Series,
+                    "Телесеріали" => Category::Series,
                     other => Category::Other(other.to_string()),
                 };
 
