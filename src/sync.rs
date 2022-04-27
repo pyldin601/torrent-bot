@@ -29,10 +29,7 @@ pub(crate) async fn sync(
             continue;
         }
 
-        eprintln!(
-            "Creating new task... (topic_id={}, title={})",
-            *topic.topic_id, topic.title
-        );
+        eprintln!("Creating new task... {:?}", topic);
 
         let download_id = match toloka_client.get_download_id(&topic.topic_id).await? {
             Some(download_id) => download_id,
