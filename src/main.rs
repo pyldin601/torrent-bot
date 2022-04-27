@@ -1,14 +1,15 @@
 use crate::config::Config;
 use crate::storage::Storage;
+use crate::sync::sync;
 use crate::toloka_client::TolokaClient;
-use transmission_rpc::types::BasicAuth;
-use transmission_rpc::TransClient;
+use crate::transmission_client::TransmissionClient;
 
 mod config;
 mod storage;
 mod sync;
 mod toloka_client;
 mod transmission_client;
+mod types;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -19,20 +20,16 @@ async fn main() -> std::io::Result<()> {
     let client = TolokaClient::create(&config.toloka.username, &config.toloka.password)
         .await
         .expect("Unable to initialize toloka client");
-    let trans = match (config.transmission.username, config.transmission.password) {
-        (Some(username), Some(password)) => TransClient::with_auth(
-            &config.transmission.url,
-            BasicAuth {
-                user: username,
-                password: password,
-            },
-        ),
-        _ => TransClient::new(&config.transmission.url),
-    };
+    let trans = TransmissionClient::create(
+        config.transmission.url.clone(),
+        config.transmission.username.clone(),
+        config.transmission.password.clone(),
+        config.transmission.download_directory.clone(),
+    );
 
-    let stats = trans.session_get().await;
-
-    eprintln!("{:?}", stats);
+    if let Err(error) = sync(client, storage, trans).await {
+        eprintln!("Error: {:?}", error);
+    }
 
     Ok(())
 }

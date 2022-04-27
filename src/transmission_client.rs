@@ -1,5 +1,4 @@
-use serde::{Deserialize, Serialize};
-use std::ops::Deref;
+use crate::types::{Category, TorrentId};
 use transmission_rpc::types::{BasicAuth, Id, RpcResponse, TorrentAddArgs};
 use transmission_rpc::TransClient;
 
@@ -8,16 +7,17 @@ pub(crate) struct TransmissionClient {
     download_dir: String,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub(crate) struct TorrentId(i64);
-
-impl Deref for TorrentId {
-    type Target = i64;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+#[derive(thiserror::Error, Debug)]
+pub(crate) enum TransmissionClientError {
+    #[error("Torrent already exists")]
+    AlreadyExists,
+    #[error("Erroneous result: {0}")]
+    ErroneousResult(String),
+    #[error("Unable to perform RPC request on transmission server: {0}")]
+    TransmissionError(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
+
+pub(crate) type TransmissionClientResult<T> = Result<T, TransmissionClientError>;
 
 impl TransmissionClient {
     pub(crate) fn create(
@@ -41,27 +41,42 @@ impl TransmissionClient {
 
     pub(crate) async fn add(
         &self,
-        torrent_file_content: String,
-    ) -> transmission_rpc::types::Result<TorrentId> {
-        let RpcResponse { arguments, .. } = self
+        torrent_file_content: Vec<u8>,
+        category: &Category,
+    ) -> TransmissionClientResult<TorrentId> {
+        let metainfo = base64::encode(torrent_file_content);
+
+        let RpcResponse { arguments, result } = self
             .client
             .torrent_add(TorrentAddArgs {
-                metainfo: Some(torrent_file_content),
-                download_dir: Some(self.download_dir.clone()),
+                metainfo: Some(metainfo.clone()),
+                download_dir: Some(format!(
+                    "{}/{}/",
+                    self.download_dir.clone(),
+                    category.to_string()
+                )),
                 ..TorrentAddArgs::default()
             })
             .await?;
 
-        Ok(TorrentId(arguments.torrent_added.unwrap().id.unwrap()))
+        if result != "success" {
+            return Err(TransmissionClientError::ErroneousResult(result));
+        }
+
+        let torrent_added = match arguments.torrent_added {
+            Some(torrent_added) => torrent_added,
+            None => {
+                return Err(TransmissionClientError::AlreadyExists);
+            }
+        };
+
+        Ok(TorrentId(torrent_added.id.unwrap()))
     }
 
-    pub(crate) async fn remove(
-        &self,
-        torrent_id: TorrentId,
-    ) -> transmission_rpc::types::Result<()> {
+    pub(crate) async fn remove(&self, torrent_id: &TorrentId) -> TransmissionClientResult<()> {
         let RpcResponse { .. } = self
             .client
-            .torrent_remove(vec![Id::Id(*torrent_id)], true)
+            .torrent_remove(vec![Id::Id(**torrent_id)], true)
             .await?;
 
         Ok(())
