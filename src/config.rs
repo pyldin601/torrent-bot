@@ -9,10 +9,24 @@ pub struct TolokaCredentials {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct TransmissionConfig {
+    #[serde(rename = "trans_url")]
+    pub url: String,
+    #[serde(rename = "trans_download_directory")]
+    pub download_directory: String,
+    #[serde(default, rename = "trans_username")]
+    pub username: Option<String>,
+    #[serde(default, rename = "trans_password")]
+    pub password: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     pub storage_file: String,
     #[serde(flatten)]
     pub toloka: TolokaCredentials,
+    #[serde(flatten)]
+    pub transmission: TransmissionConfig,
 }
 
 impl Config {

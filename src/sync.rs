@@ -2,6 +2,8 @@ use crate::storage::{Storage, StorageError};
 use crate::toloka_client::{TolokaClient, TolokaClientError, TolokaTopic};
 use std::collections::HashSet;
 use thiserror::Error;
+use transmission_rpc::TransClient;
+use transmission_rpc::types::TorrentAddArgs;
 
 enum TrackerTopic {
     Toloka(TolokaTopic),
@@ -44,7 +46,7 @@ impl TrackerTopic {
     }
 }
 
-pub(crate) async fn sync(toloka: TolokaClient, storage: Storage) -> Result<(), SyncError> {
+pub(crate) async fn sync(toloka: TolokaClient, storage: Storage, trans_client: TransClient) -> Result<(), SyncError> {
     let topics = toloka.get_watched_topics().await?;
     let mut tasks = storage.get_tasks()?;
 
@@ -54,6 +56,10 @@ pub(crate) async fn sync(toloka: TolokaClient, storage: Storage) -> Result<(), S
         }
 
         // Create torrent
+        trans_client.torrent_add(TorrentAddArgs {
+            metainfo: Some(String::new()),
+            ..TorrentAddArgs::default()
+        });
 
         tasks.insert(topic.id.clone(), String::new());
     }
