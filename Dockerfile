@@ -22,7 +22,7 @@ RUN \
     mv target/release/torrent-bot torrent-bot && \
     rm -rf target
 
-FROM rust
+FROM scratch
 COPY --from=0 /code/torrent-bot /torrent-bot
 
 CMD ["/torrent-bot"]
