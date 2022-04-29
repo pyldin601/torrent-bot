@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::ops::Deref;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
