@@ -57,3 +57,13 @@ pub(crate) struct Topic {
     pub(crate) title: String,
     pub(crate) category: Category,
 }
+
+pub(crate) trait Topics {
+    fn has_topic(&self, topic_id: &TopicId) -> bool;
+}
+
+impl Topics for Vec<Topic> {
+    fn has_topic(&self, topic_id: &TopicId) -> bool {
+        self.iter().any(|t| &t.topic_id == topic_id)
+    }
+}

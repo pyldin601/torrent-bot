@@ -76,6 +76,18 @@ impl TransmissionClient {
     pub(crate) async fn remove(&self, torrent_id: &TorrentId) -> TransmissionClientResult<()> {
         let RpcResponse { .. } = self
             .client
+            .torrent_remove(vec![Id::Id(**torrent_id)], false)
+            .await?;
+
+        Ok(())
+    }
+
+    pub(crate) async fn remove_with_data(
+        &self,
+        torrent_id: &TorrentId,
+    ) -> TransmissionClientResult<()> {
+        let RpcResponse { .. } = self
+            .client
             .torrent_remove(vec![Id::Id(**torrent_id)], true)
             .await?;
 

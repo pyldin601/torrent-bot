@@ -1,4 +1,4 @@
-use crate::types::{TopicId, TorrentId};
+use crate::types::{DownloadId, TopicId, TorrentId};
 use serde::{Deserialize, Serialize};
 
 const TASKS_KEY: &str = "tasks";
@@ -18,6 +18,7 @@ type StorageResult<T> = Result<T, StorageError>;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct Task {
     pub(crate) topic_id: TopicId,
+    pub(crate) download_id: DownloadId,
     pub(crate) torrent_id: TorrentId,
 }
 
