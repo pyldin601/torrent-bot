@@ -30,6 +30,10 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn init_dotenv() {
+        dotenv::dotenv().ok();
+    }
+
     pub fn from_env() -> Self {
         match envy::from_env::<Self>() {
             Ok(config) => config,
