@@ -26,29 +26,32 @@ pub(crate) async fn sync(
 
     // Delete removed tasks
     for task in tasks.iter() {
-        debug!(?task, "Checking task");
+        info!("Checking task {:?}", task);
 
         if !topics.has_topic(&task.topic_id) {
-            info!(?task, "Deleting task");
+            info!("Deleting task {:?}", task);
 
-            debug!(?task, "Removing task from torrent client");
+            info!(
+                torrent_id = ?task.torrent_id,
+                "Removing torrent from torrent client"
+            );
             transmission_client
                 .remove_with_data(&task.torrent_id)
                 .await?;
 
-            debug!(?task, "Removing task from storage");
+            info!("Removing task from storage {:?}", task);
             storage.delete_task_by_topic_id(&task.topic_id)?;
         }
     }
 
     // Check tracked topics
     for topic in topics.iter() {
-        debug!(?topic, "Synchronizing topic");
+        info!("Synchronizing topic {:?}", topic);
 
         let download_id = match toloka_client.get_download_id(&topic.topic_id).await? {
             Some(download_id) => download_id,
             None => {
-                info!(?topic, "No download_id for topic; Skipping");
+                info!(?topic, "No download_id in topic; Skipping");
                 continue;
             }
         };
@@ -57,17 +60,14 @@ pub(crate) async fn sync(
 
         match task {
             Some(task) if task.download_id == download_id => {
-                debug!(
-                    ?topic,
-                    "Task associated with the given topic already exist; Ignoring",
-                );
+                info!(?topic, "Found task; task is actual",);
                 continue;
             }
             Some(task) => {
                 info!(
-                    ?topic,
-                    ?download_id,
-                    "Task exist, but download_id has been changed; Will update"
+                    old_download_id = ?task.download_id,
+                    new_download_id = ?download_id,
+                    "Found task, but download_id has been changed; Will update"
                 );
                 transmission_client.remove(&task.torrent_id).await?;
             }
@@ -76,10 +76,10 @@ pub(crate) async fn sync(
             }
         };
 
-        debug!(?download_id, "Downloading torrent file");
+        info!(?download_id, "Downloading torrent file");
         let torrent_file_content = toloka_client.download(&download_id).await?;
 
-        debug!("Adding torrent file to torrent client");
+        info!("Adding torrent file to torrent client");
         match transmission_client
             .add(torrent_file_content, &topic.category)
             .await
@@ -91,14 +91,14 @@ pub(crate) async fn sync(
                     torrent_id,
                 };
 
-                debug!(?task, "Adding task to storage");
+                info!(?task, "Adding task to storage");
                 storage.create_task(task)?;
             }
             Err(TransmissionClientError::AlreadyExists) => {
-                warn!("Torrent file already exists; ignoring")
+                info!("Torrent file already exists; ignoring")
             }
             Err(error) => {
-                warn!(?error, "Unable to add torrent file to torrent client");
+                info!(?error, "Unable to add torrent file to torrent client");
                 return Err(error.into());
             }
         }
