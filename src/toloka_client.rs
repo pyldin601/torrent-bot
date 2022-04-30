@@ -138,9 +138,9 @@ impl TolokaClient {
                 let topic_id_raw = link.value().attr("href").unwrap_or_default().to_string();
                 let title = link.inner_html().to_string();
 
-                let category = match category_raw.as_str() {
-                    "Фільми" => Category::Movies,
-                    "Телесеріали" => Category::Series,
+                let category = match category_raw.to_lowercase().as_str() {
+                    s if s.contains("фільм") => Category::Movies,
+                    s if s.contains("серіал") => Category::Series,
                     other => Category::Other(other.to_string()),
                 };
 
