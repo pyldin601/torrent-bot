@@ -82,7 +82,7 @@ jobs:
         PUBLIC_IP: ${{ fromJSON(needs.spawn-spots.outputs.PUBLIC_IPS) }}
     env:
       PUBLIC_IP: ${{ matrix.PUBLIC_IP }}
-      REPOSITORY_URL: ${{ github.repositoryUrl }}
+      REPOSITORY_URL: https://github.com/${{ github.repository }}.git
       CHECKOUT: ${{ github.sha }}
       DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_IMAGE }}
       IMAGE_TAG: ${{ needs.get-image-tag.outputs.image_tag }}
@@ -123,7 +123,7 @@ jobs:
       - get-image-tag
     env:
       PUBLIC_IP: ${{ fromJSON(needs.spawn-spots.outputs.PUBLIC_IPS)[0] }}
-      REPOSITORY_URL: ${{ github.repositoryUrl }}
+      REPOSITORY_URL: https://github.com/${{ github.repository }}.git
       CHECKOUT: ${{ github.sha }}
       DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_IMAGE }}
       IMAGE_TAG: ${{ needs.get-image-tag.outputs.image_tag }}
