@@ -1,0 +1,17 @@
+name: Build multi-arch image
+
+on: [workflow_dispatch]
+
+jobs:
+  test:
+    name: Build
+    uses: pldin601/common-workflows/.github/workflows/build-multiarch-on-aws-spots.yml@setup-spots
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    with:
+      DOCKERHUB_IMAGE: ${{ github.repository }}
+      REPOSITORY_URL: https://github.com/${{ github.repository }}.git
+      CHECKOUT: ${{ github.sha }}
