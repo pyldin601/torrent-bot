@@ -1,5 +1,5 @@
 # torrent-bot
-Utility, that syncs topics tracked by user in toloka torrent tracker (https://toloka.to) with transmission torrent client.
+Utility, that syncs topics tracked by user in toloka torrent tracker with transmission torrent client.
 
 ## Environment variables example
 ```
