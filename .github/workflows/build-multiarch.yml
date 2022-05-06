@@ -21,7 +21,7 @@ jobs:
     needs:
       - get-image-tag
     name: Build
-    uses: pldin601/common-workflows/.github/workflows/build-multiarch-on-aws-spots.yml@setup-spots
+    uses: pldin601/common-workflows/.github/workflows/build-multiarch-on-aws-spots.yml@v1.0.0
     with:
       DOCKER_IMAGE_TAG: ${{ needs.get-image-tag.outputs.image_tag }}
     secrets:
