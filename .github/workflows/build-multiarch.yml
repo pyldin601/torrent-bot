@@ -1,0 +1,31 @@
+name: Build multi-arch image
+
+on: [workflow_dispatch]
+
+jobs:
+  get-image-tag:
+    name: Get image tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+      - name: setup variables
+        id: vars
+        run: |
+          echo "::set-output name=date::$(date +'%y.%m.%d%H%m')"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+    outputs:
+      image_tag: ${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
+
+  build:
+    needs:
+      - get-image-tag
+    name: Build
+    uses: pldin601/common-workflows/.github/workflows/build-multiarch-on-aws-spots.yml@setup-spots
+    with:
+      DOCKER_IMAGE_TAG: ${{ needs.get-image-tag.outputs.image_tag }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
