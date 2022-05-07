@@ -7,11 +7,19 @@ on:
 
 jobs:
   tag:
-    runs-on: ubuntu-18.04
+    name: Extract tag name
+    runs-on: ubuntu-20.04
+    outputs:
+      TAG: ${{ steps.tag.outputs.result }}
     steps:
       - name: Extract the tag
         id: tag
-        run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
+        uses: actions/github-script@0.2.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            return context.payload.ref.replace(/\/refs\/tags\//, '');
+
   build:
     needs:
       - tag
