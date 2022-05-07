@@ -3,7 +3,7 @@ name: Build multi-arch image
 on:
   push:
     tags:
-      - *
+      - 'v*'
 
 jobs:
   tag:
