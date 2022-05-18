@@ -28,13 +28,13 @@ jobs:
     needs:
       - tag
     name: Build
-    uses: pldin601/common-workflows/.github/workflows/build-multiarch-on-aws-spots.yml@push-latest-tag
+    uses: pldin601/common-workflows/.github/workflows/build-multiarch-on-aws-spots.yml@main
     with:
       DOCKER_IMAGE_TAG: ${{ needs.tag.outputs.TAG }}
-      DOCKER_PUSH_LATEST_TAG: ${{ github.ref != 'refs/heads/master' }}
-      WORKFLOW_CHECKOUT: push-latest-tag # Should be equal to the ref used in "uses" expression.
+      WORKFLOW_CHECKOUT: main # Should be equal to the ref used in "uses" expression.
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: eu-west-2
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
