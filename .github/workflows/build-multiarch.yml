@@ -7,6 +7,9 @@ on:
     tags:
       - '**'
 
+env:
+  DUMMY: "0"
+
 jobs:
   tag:
     name: Extract tag name
