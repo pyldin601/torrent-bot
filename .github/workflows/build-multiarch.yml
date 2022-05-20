@@ -8,7 +8,7 @@ on:
       - '**'
 
 env:
-  DUMMY: "2"
+  DUMMY: "3"
 
 jobs:
   tag:
