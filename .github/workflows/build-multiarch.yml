@@ -31,10 +31,10 @@ jobs:
     needs:
       - tag
     name: Build
-    uses: pldin601/build-multiarch-on-aws-spots/.github/workflows/build-multiarch-on-aws-spots.yml@532793edc2f67da38d9a85f305676fcde612d71c
+    uses: pldin601/build-multiarch-on-aws-spots/.github/workflows/build-multiarch-on-aws-spots.yml@ea42c6eb3558c5aad372712dd84bd2faaa918601
     with:
       DOCKER_IMAGE_TAG: ${{ needs.tag.outputs.TAG }}
-      WORKFLOW_CHECKOUT: 532793edc2f67da38d9a85f305676fcde612d71c
+      WORKFLOW_CHECKOUT: ea42c6eb3558c5aad372712dd84bd2faaa918601
       AWS_REGION: eu-west-2
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
