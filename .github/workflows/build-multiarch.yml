@@ -15,7 +15,7 @@ jobs:
     name: Extract tag name
     runs-on: ubuntu-latest
     outputs:
-      TAG: ${{ steps.tag.outputs.result }}
+      TAG: ${{ fromJSON(steps.tag.outputs.result) }}
     steps:
       - name: Extract the tag name
         id: tag
