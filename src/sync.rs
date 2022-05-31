@@ -22,7 +22,12 @@ pub(crate) async fn sync(
     transmission_client: TransmissionClient,
 ) -> Result<(), SyncError> {
     let topics = toloka_client.get_watched_topics().await?;
+
+    info!("Topics tracked: {:?}", topics);
+
     let tasks = storage.get_tasks()?;
+
+    info!("Tasks stored: {:?}", tasks);
 
     // Delete removed tasks
     for task in tasks.iter() {
