@@ -2,7 +2,7 @@
 Utility, that syncs topics tracked by user in toloka torrent tracker with transmission torrent client.
 
 ## Environment variables example
-```
+```dotenv
 # Path to the storage where's the sync state is located
 STORAGE_FILE=torrent-bot.db
 # Creadentials used to login to the toloka torrent tracker
