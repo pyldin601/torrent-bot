@@ -25,7 +25,7 @@ impl Deref for TopicId {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
-pub(crate) struct DownloadId(pub(crate) String);
+pub(crate) struct DownloadId(pub(crate) String, pub(crate) Option<String>);
 
 impl Deref for DownloadId {
     type Target = String;

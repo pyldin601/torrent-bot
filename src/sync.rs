@@ -1,7 +1,7 @@
 use crate::storage::{Storage, StorageError, Task};
 use crate::toloka_client::{TolokaClient, TolokaClientError};
 use crate::transmission_client::TransmissionClientError;
-use crate::types::Topics;
+use crate::types::{DownloadId, Topics};
 use crate::TransmissionClient;
 use thiserror::Error;
 use tracing::{debug, info, warn};

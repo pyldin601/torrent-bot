@@ -95,11 +95,34 @@ impl TolokaClient {
 
         let download_selector = Selector::parse(".piwik_download").unwrap();
 
+        let registered_at = {
+            let bt_tbl_selector = Selector::parse("table.btTbl").unwrap();
+            let bt_row_selector = Selector::parse("tr.row4_to").unwrap();
+            let bt_col_selector = Selector::parse("td.genmed").unwrap();
+
+            let parse_registered_at = || -> Option<String> {
+                Some(
+                    html.select(&bt_tbl_selector)
+                        .next()?
+                        .select(&bt_row_selector)
+                        .skip(1)
+                        .next()?
+                        .select(&bt_col_selector)
+                        .skip(1)
+                        .next()?
+                        .inner_html()
+                        .replace("&nbsp;", ""),
+                )
+            };
+
+            parse_registered_at()
+        };
+
         Ok(html
             .select(&download_selector)
             .next()
             .map(|e| e.value().attr("href").unwrap_or_default().to_string())
-            .map(|url| DownloadId(url.replace("download.php?id=", ""))))
+            .map(|url| DownloadId(url.replace("download.php?id=", ""), registered_at)))
     }
 
     pub(crate) async fn get_watched_topics(&self) -> TolokaClientResult<Vec<Topic>> {
