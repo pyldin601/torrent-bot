@@ -28,7 +28,7 @@ pub(crate) async fn sync(
 
     let tasks_to_delete = tasks
         .iter()
-        .filter(|t| watched_topics.has_topic(&t.topic_id))
+        .filter(|t| !watched_topics.has_topic(&t.topic_id))
         .collect::<Vec<_>>();
 
     info!("Topics to delete: {:?}", tasks_to_delete);
