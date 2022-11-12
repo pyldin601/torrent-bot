@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
@@ -35,6 +36,17 @@ impl Deref for DownloadId {
     }
 }
 
+impl Display for DownloadId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}/{}",
+            self.0,
+            self.1.clone().unwrap_or(format!("none"))
+        )
+    }
+}
+
 #[derive(Debug)]
 pub(crate) enum Category {
     Movies,
@@ -57,6 +69,12 @@ pub(crate) struct Topic {
     pub(crate) topic_id: TopicId,
     pub(crate) title: String,
     pub(crate) category: Category,
+}
+
+impl Display for Topic {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{} ({})", self.topic_id.0, self.title)
+    }
 }
 
 pub(crate) trait Topics {

@@ -22,6 +22,16 @@ pub(crate) struct Task {
     pub(crate) torrent_id: TorrentId,
 }
 
+pub(crate) trait Tasks {
+    fn has_topic(&self, topic_id: &TopicId) -> bool;
+}
+
+impl Tasks for Vec<Task> {
+    fn has_topic(&self, topic_id: &TopicId) -> bool {
+        self.iter().any(|t| &t.topic_id == topic_id)
+    }
+}
+
 impl Storage {
     pub(crate) fn create(path: &str) -> StorageResult<Self> {
         let db = sled::open(path)?;
