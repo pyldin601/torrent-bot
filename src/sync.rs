@@ -67,6 +67,7 @@ pub(crate) async fn sync(
                     topic, task.download_id, download_id
                 );
                 transmission_client.remove(&task.torrent_id).await?;
+                storage.delete_task_by_topic_id(&task.topic_id)?;
             }
             None => {
                 info!("New topic {}", topic);
