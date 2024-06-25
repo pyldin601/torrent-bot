@@ -13,7 +13,7 @@ actix-rt = "2.8.0"
 thiserror = "1.0.30"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.79"
-scraper = "0.13.0"
+scraper = "0.19.0"
 dotenv = "0.15.0"
 envy = "0.4.2"
 sled = "0.34.7"
