@@ -34,11 +34,11 @@ pub(crate) async fn sync(
     for topic in watched_topics.into_iter() {
         present_topics.insert(topic.topic_meta.topic_id.clone());
 
-        let task = tasks
+        let matched_task = tasks
             .iter()
             .find(|t| t.topic_id == topic.topic_meta.topic_id);
 
-        match (task) {
+        match matched_task {
             Some(task)
                 if task.topic_download_registered_at == topic.download_meta.registered_at =>
             {
