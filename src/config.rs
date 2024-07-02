@@ -18,6 +18,8 @@ pub struct TransmissionConfig {
     pub username: Option<String>,
     #[serde(default, rename = "trans_password")]
     pub password: Option<String>,
+    #[serde(default, rename = "trans_dry_run")]
+    pub dry_run: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]

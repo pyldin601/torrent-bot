@@ -28,7 +28,7 @@ struct TopicMeta {
 }
 
 struct DownloadMeta {
-    pub(crate) registered_at: Option<String>,
+    pub(crate) registered_at: String,
     pub(crate) download_id: String,
 }
 
@@ -209,7 +209,7 @@ impl TolokaClient {
             .map(|e| e.value().attr("href").unwrap_or_default().to_string())
             .map(|url| DownloadMeta {
                 download_id: url.replace("download.php?id=", ""),
-                registered_at,
+                registered_at: registered_at.unwrap_or_default(),
             }))
     }
 
