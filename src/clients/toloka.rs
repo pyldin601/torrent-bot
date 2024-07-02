@@ -4,7 +4,22 @@ use scraper::{Html, Selector};
 use serde::Serialize;
 use tracing::warn;
 
-use crate::structs::topic::{Category, DownloadId};
+#[derive(Debug)]
+pub(crate) enum Category {
+    Movies,
+    Series,
+    Other(String),
+}
+
+impl ToString for Category {
+    fn to_string(&self) -> String {
+        String::from(match self {
+            Self::Movies => "Movies",
+            Self::Series => "Series",
+            Self::Other(_) => "Other",
+        })
+    }
+}
 
 struct TopicMeta {
     pub(crate) topic_id: String,
@@ -80,13 +95,10 @@ impl TolokaClient {
         Ok(Self { client })
     }
 
-    pub(crate) async fn download_torrent_data(
-        &self,
-        download_id: &DownloadId,
-    ) -> TolokaClientResult<Vec<u8>> {
+    pub(crate) async fn download(&self, download_id: &str) -> TolokaClientResult<Vec<u8>> {
         let response = self
             .client
-            .get(format!("{}/download.php?id={}", TOLOKA_HOST, **download_id))
+            .get(format!("{}/download.php?id={}", TOLOKA_HOST, download_id))
             .send()
             .await?;
 
