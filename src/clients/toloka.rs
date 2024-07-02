@@ -21,13 +21,13 @@ impl ToString for Category {
     }
 }
 
-struct TopicMeta {
+pub(crate) struct TopicMeta {
     pub(crate) topic_id: String,
     pub(crate) title: String,
     pub(crate) category: Category,
 }
 
-struct DownloadMeta {
+pub(crate) struct DownloadMeta {
     pub(crate) registered_at: String,
     pub(crate) download_id: String,
 }

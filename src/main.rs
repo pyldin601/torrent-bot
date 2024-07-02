@@ -9,22 +9,21 @@ use crate::task_db::TaskDb;
 
 mod clients;
 mod config;
-mod storage;
 mod sync_v2;
 mod task_db;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
+    let config = {
+        Config::init_dotenv();
+        Config::from_env()
+    };
+
     let subscriber = FmtSubscriber::builder()
         .with_max_level(Level::INFO)
         .finish();
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
-
-    let config = {
-        Config::init_dotenv();
-        Config::from_env()
-    };
 
     let storage = TaskDb::create(&config.storage_file).expect("Unable to initialize DB");
     let toloka_client = TolokaClient::create(&config.toloka.username, &config.toloka.password)

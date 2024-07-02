@@ -16,7 +16,7 @@ pub(crate) struct TransmissionClient {
 #[derive(thiserror::Error, Debug)]
 pub(crate) enum TransmissionClientError {
     #[error("Torrent already exists")]
-    AlreadyExists,
+    Duplicate,
     #[error("Erroneous result: {0}")]
     ErroneousResult(String),
     #[error("Unable to perform RPC request on transmission server: {0}")]
@@ -71,10 +71,8 @@ impl TransmissionClient {
             .await?;
 
         match arguments {
-            TorrentAddedOrDuplicate::TorrentDuplicate(_) => {
-                return Err(TransmissionClientError::ErroneousResult(result));
-            }
-            TorrentAddedOrDuplicate::TorrentAdded(torrent) => return Ok(torrent.id.unwrap()),
+            TorrentAddedOrDuplicate::TorrentDuplicate(_) => Err(TransmissionClientError::Duplicate),
+            TorrentAddedOrDuplicate::TorrentAdded(torrent) => Ok(torrent.id.unwrap()),
         }
     }
 
