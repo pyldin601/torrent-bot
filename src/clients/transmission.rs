@@ -57,6 +57,7 @@ impl TransmissionClient {
         path: &str,
     ) -> TransmissionClientResult<i64> {
         let metainfo = general_purpose::STANDARD.encode(torrent_file_content);
+        let dry_run = self.dry_run;
 
         let RpcResponse { arguments, result } = self
             .client
@@ -64,6 +65,7 @@ impl TransmissionClient {
             .torrent_add(TorrentAddArgs {
                 metainfo: Some(metainfo.clone()),
                 download_dir: Some(format!("{}/{}/", &self.download_dir, path)),
+                paused: Some(dry_run),
                 ..TorrentAddArgs::default()
             })
             .await?;
