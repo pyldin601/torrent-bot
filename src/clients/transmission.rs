@@ -52,7 +52,7 @@ impl TransmissionClient {
     }
 
     pub(crate) async fn add(
-        &mut self,
+        &self,
         torrent_file_content: Vec<u8>,
         path: &str,
     ) -> TransmissionClientResult<i64> {
