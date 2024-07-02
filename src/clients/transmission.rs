@@ -54,7 +54,7 @@ impl TransmissionClient {
     pub(crate) async fn add(
         &mut self,
         torrent_file_content: Vec<u8>,
-        category: &str,
+        path: &str,
     ) -> TransmissionClientResult<i64> {
         let metainfo = general_purpose::STANDARD.encode(torrent_file_content);
 
@@ -63,7 +63,7 @@ impl TransmissionClient {
             .lock()
             .torrent_add(TorrentAddArgs {
                 metainfo: Some(metainfo.clone()),
-                download_dir: Some(format!("{}/{}/", &self.download_dir, category)),
+                download_dir: Some(format!("{}/{}/", &self.download_dir, path)),
                 ..TorrentAddArgs::default()
             })
             .await?;
