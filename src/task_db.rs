@@ -1,38 +1,28 @@
-use crate::types::{DownloadId, TopicId, TorrentId};
 use serde::{Deserialize, Serialize};
 
-const TASKS_KEY: &str = "tasks";
+const TASKS_KEY: &str = "torrent_bot_tasks";
 
-pub(crate) struct Storage {
+pub(crate) struct TaskDb {
     db: sled::Db,
 }
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum StorageError {
     #[error("Storage error: {0}")]
-    DbError(#[from] sled::Error),
+    TaskDbError(#[from] sled::Error),
 }
 
 type StorageResult<T> = Result<T, StorageError>;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct Task {
-    pub(crate) topic_id: TopicId,
-    pub(crate) download_id: DownloadId,
-    pub(crate) torrent_id: TorrentId,
+    pub(crate) topic_id: String,
+    pub(crate) topic_title: String,
+    pub(crate) topic_download_registered_at: String,
+    pub(crate) transmission_torrent_id: i64,
 }
 
-pub(crate) trait Tasks {
-    fn has_topic(&self, topic_id: &TopicId) -> bool;
-}
-
-impl Tasks for Vec<Task> {
-    fn has_topic(&self, topic_id: &TopicId) -> bool {
-        self.iter().any(|t| &t.topic_id == topic_id)
-    }
-}
-
-impl Storage {
+impl TaskDb {
     pub(crate) fn create(path: &str) -> StorageResult<Self> {
         let db = sled::open(path)?;
 
@@ -46,11 +36,12 @@ impl Storage {
             Some(raw) => serde_json::from_slice(raw.as_ref()).unwrap_or_default(),
             None => vec![],
         };
+
         Ok(tasks)
     }
 
     #[tracing::instrument(err, skip(self))]
-    pub(crate) fn delete_task_by_topic_id(&self, topic_id: &TopicId) -> StorageResult<()> {
+    pub(crate) fn delete_task_by_topic_id(&self, topic_id: &str) -> StorageResult<()> {
         let tasks = self.get_tasks()?;
         self.save_tasks(
             &tasks
@@ -61,7 +52,7 @@ impl Storage {
     }
 
     #[tracing::instrument(err, skip(self))]
-    pub(crate) fn create_task(&self, task: Task) -> StorageResult<()> {
+    pub(crate) fn add_task(&self, task: Task) -> StorageResult<()> {
         let mut tasks = self.get_tasks()?;
         tasks.push(task);
         self.save_tasks(&tasks)

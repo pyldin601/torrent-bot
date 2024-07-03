@@ -1,0 +1,19 @@
+version: "3.5"
+
+services:
+  trans:
+    image: linuxserver/transmission
+    volumes:
+      - trans_config:/config
+      - trans_downloads:/downloads
+      - trans_watch:/watch
+      - trans_data:/data
+    ports:
+      - 29091:9091
+    restart: unless-stopped
+
+volumes:
+  trans_config:
+  trans_downloads:
+  trans_watch:
+  trans_data:

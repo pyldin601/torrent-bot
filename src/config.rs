@@ -1,4 +1,17 @@
-use serde::Deserialize;
+use serde::{de, Deserialize};
+
+fn deserialize_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let s: String = de::Deserialize::deserialize(deserializer)?;
+
+    match s.as_str() {
+        "true" => Ok(true),
+        "false" => Ok(false),
+        _ => Err(de::Error::unknown_variant(&s, &["true", "false"])),
+    }
+}
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct TolokaCredentials {
@@ -18,6 +31,12 @@ pub struct TransmissionConfig {
     pub username: Option<String>,
     #[serde(default, rename = "trans_password")]
     pub password: Option<String>,
+    #[serde(
+        default,
+        rename = "trans_dry_run",
+        deserialize_with = "deserialize_bool"
+    )]
+    pub dry_run: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]
