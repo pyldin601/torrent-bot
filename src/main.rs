@@ -1,6 +1,7 @@
 use tracing::{error, Level};
 use tracing_subscriber::FmtSubscriber;
 
+use crate::clients::telegram::TelegramBotClient;
 use crate::clients::toloka::TolokaClient;
 use crate::clients::transmission::TransmissionClient;
 use crate::config::Config;
@@ -36,11 +37,14 @@ async fn main() -> std::io::Result<()> {
         config.transmission.download_directory.clone(),
         config.transmission.dry_run,
     );
+    let telegram_client =
+        TelegramBotClient::create(config.telegram.bot_token, config.telegram.bot_chat_id);
 
     if let Err(error) = sync(
         toloka_client,
         transmission_client,
         storage,
+        telegram_client,
         config.wipeout_mode,
     )
     .await

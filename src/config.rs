@@ -22,6 +22,14 @@ pub struct TolokaCredentials {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct TelegramCredentials {
+    #[serde(default, rename = "telegram_bot_token")]
+    pub bot_token: Option<String>,
+    #[serde(default, rename = "telegram_bot_chat_id")]
+    pub bot_chat_id: Option<i64>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct TransmissionConfig {
     #[serde(rename = "trans_url")]
     pub url: String,
@@ -48,6 +56,8 @@ pub struct Config {
     pub toloka: TolokaCredentials,
     #[serde(flatten)]
     pub transmission: TransmissionConfig,
+    #[serde(flatten)]
+    pub telegram: TelegramCredentials,
 }
 
 impl Config {
