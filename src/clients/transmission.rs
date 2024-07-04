@@ -59,7 +59,10 @@ impl TransmissionClient {
         let metainfo = general_purpose::STANDARD.encode(torrent_file_content);
         let dry_run = self.dry_run;
 
-        let RpcResponse { arguments, result } = self
+        let RpcResponse {
+            arguments,
+            result: _,
+        } = self
             .client
             .lock()
             .torrent_add(TorrentAddArgs {
