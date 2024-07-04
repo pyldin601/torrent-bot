@@ -37,7 +37,14 @@ async fn main() -> std::io::Result<()> {
         config.transmission.dry_run,
     );
 
-    if let Err(error) = sync(toloka_client, transmission_client, storage).await {
+    if let Err(error) = sync(
+        toloka_client,
+        transmission_client,
+        storage,
+        config.wipeout_mode,
+    )
+    .await
+    {
         error!("Sync error: {:?}", error);
     }
 

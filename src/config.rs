@@ -42,6 +42,8 @@ pub struct TransmissionConfig {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     pub storage_file: String,
+    #[serde(default)]
+    pub wipeout_mode: bool,
     #[serde(flatten)]
     pub toloka: TolokaCredentials,
     #[serde(flatten)]
