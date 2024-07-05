@@ -24,7 +24,7 @@ impl TelegramBotClient {
     pub(crate) async fn send_topic_added(&self, title: &str) {
         if let TelegramBotClient::Active { bot, recipient } = self {
             if let Err(error) = bot
-                .send_message(recipient.clone(), format!("➕ Added {}", title))
+                .send_message(recipient.clone(), format!("Added: {}", title))
                 .await
             {
                 error!(?error, "Failed to send message to telegram bot");
@@ -34,7 +34,7 @@ impl TelegramBotClient {
     pub(crate) async fn send_topic_deleted(&self, title: &str) {
         if let TelegramBotClient::Active { bot, recipient } = self {
             if let Err(error) = bot
-                .send_message(recipient.clone(), format!("➖ Deleted {}", title))
+                .send_message(recipient.clone(), format!("Deleted: {}", title))
                 .await
             {
                 error!(?error, "Failed to send message to telegram bot");
@@ -45,7 +45,7 @@ impl TelegramBotClient {
     pub(crate) async fn send_topic_updated(&self, title: &str) {
         if let TelegramBotClient::Active { bot, recipient } = self {
             if let Err(error) = bot
-                .send_message(recipient.clone(), format!("🔄 Updated {}", title))
+                .send_message(recipient.clone(), format!("Updated: {}", title))
                 .await
             {
                 error!(?error, "Failed to send message to telegram bot");

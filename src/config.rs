@@ -13,6 +13,24 @@ where
     }
 }
 
+fn deserialize_option_i64<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let s: Option<String> = de::Deserialize::deserialize(deserializer)?;
+
+    let parsed_value = s.map(|value| {
+        value
+            .parse::<i64>()
+            .map_err(|_| de::Error::custom(format!("Unable to parse as number: {}", value)))
+    });
+
+    match parsed_value {
+        Some(value) => value.map(Some),
+        None => Ok(None),
+    }
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct TolokaCredentials {
     #[serde(rename = "toloka_username")]
@@ -25,7 +43,11 @@ pub struct TolokaCredentials {
 pub struct TelegramCredentials {
     #[serde(default, rename = "telegram_bot_token")]
     pub bot_token: Option<String>,
-    #[serde(default, rename = "telegram_bot_chat_id")]
+    #[serde(
+        default,
+        rename = "telegram_bot_chat_id",
+        deserialize_with = "deserialize_option_i64"
+    )]
     pub bot_chat_id: Option<i64>,
 }
 
