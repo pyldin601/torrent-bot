@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use thiserror::Error;
 use tracing::{debug, info};
 
+use crate::clients::telegram::TelegramBotClient;
 use crate::clients::toloka::{TolokaClient, TolokaClientError};
 use crate::clients::transmission::{TransmissionClient, TransmissionClientError};
 use crate::task_db::{StorageError, Task, TaskDb};
@@ -21,6 +22,7 @@ pub(crate) async fn sync(
     toloka_client: TolokaClient,
     transmission_client: TransmissionClient,
     task_db: TaskDb,
+    telegram_bot_client: TelegramBotClient,
     wipeout_mode: bool,
 ) -> Result<(), SyncError> {
     debug!("Loading tasks...");
@@ -65,6 +67,10 @@ pub(crate) async fn sync(
                         transmission_torrent_id: torrent_id,
                     })?;
 
+                    telegram_bot_client
+                        .send_topic_updated(&topic.topic_meta.title)
+                        .await;
+
                     info!("Topic updated: {}", topic.topic_meta.title);
                 }
                 None => {
@@ -82,6 +88,10 @@ pub(crate) async fn sync(
                         transmission_torrent_id: torrent_id,
                     })?;
 
+                    telegram_bot_client
+                        .send_topic_added(&topic.topic_meta.title)
+                        .await;
+
                     info!("Topic added: {}", topic.topic_meta.title);
                 }
             }
@@ -97,6 +107,11 @@ pub(crate) async fn sync(
             .remove_with_data(task.transmission_torrent_id)
             .await?;
         task_db.delete_task_by_topic_id(&task.topic_id)?;
+
+        telegram_bot_client
+            .send_topic_deleted(&task.topic_title)
+            .await;
+
         info!("Topic deleted: {}", task.topic_title);
     }
 
