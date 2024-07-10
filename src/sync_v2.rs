@@ -57,10 +57,10 @@ pub(crate) async fn sync(
                             task_db.mark_task_as_finished_by_topic_id(&task.topic_id)?;
 
                             telegram_bot_client
-                                .send_topic_downloaded(&task.topic_title)
+                                .send_torrent_downloaded(&task.topic_title)
                                 .await;
 
-                            info!("Topic downloaded: {}", topic.topic_meta.title);
+                            info!("Torrent downloaded: {}", topic.topic_meta.title);
                         }
                     }
                 }

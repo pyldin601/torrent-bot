@@ -53,7 +53,7 @@ impl TelegramBotClient {
         }
     }
 
-    pub(crate) async fn send_topic_downloaded(&self, title: &str) {
+    pub(crate) async fn send_torrent_downloaded(&self, title: &str) {
         if let TelegramBotClient::Active { bot, recipient } = self {
             if let Err(error) = bot
                 .send_message(recipient.clone(), format!("Downloaded: {}", title))
