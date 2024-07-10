@@ -31,7 +31,7 @@ jobs:
     needs:
       - tag
     name: Build
-    uses: pldin601/build-multiarch-on-aws-spots/.github/workflows/build-multiarch-on-aws-spots.yml@f017af3c8cea1fd202f6f9fc7284ec9c3bb23a83
+    uses: pyldin601/build-multiarch-on-aws-spots/.github/workflows/build-multiarch-on-aws-spots.yml@f017af3c8cea1fd202f6f9fc7284ec9c3bb23a83
     with:
       DOCKER_IMAGE_TAG: ${{ needs.tag.outputs.TAG }}
       WORKFLOW_CHECKOUT: f017af3c8cea1fd202f6f9fc7284ec9c3bb23a83
