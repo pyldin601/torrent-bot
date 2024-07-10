@@ -101,4 +101,21 @@ impl TransmissionClient {
 
         Ok(())
     }
+
+    pub(crate) async fn get_is_downloaded(
+        &self,
+        torrent_id: i64,
+    ) -> TransmissionClientResult<bool> {
+        let RpcResponse { arguments, .. } = self
+            .client
+            .lock()
+            .torrent_get(None, Some(vec![Id::Id(torrent_id)]))
+            .await?;
+
+        Ok(arguments
+            .torrents
+            .first()
+            .map(|torrent| torrent.is_finished)
+            .is_some())
+    }
 }

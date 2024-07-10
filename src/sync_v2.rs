@@ -47,6 +47,22 @@ pub(crate) async fn sync(
                     if task.topic_download_registered_at == topic.download_meta.registered_at =>
                 {
                     debug!("Topic unchanged: {}", topic.topic_meta.title);
+
+                    if matches!(task.last_task_status, TaskStatus::Added) {
+                        let is_downloaded = transmission_client
+                            .get_is_downloaded(task.transmission_torrent_id)
+                            .await?;
+
+                        if is_downloaded {
+                            task_db.mark_task_as_finished_by_topic_id(&task.topic_id)?;
+
+                            telegram_bot_client
+                                .send_topic_downloaded(&task.topic_title)
+                                .await;
+
+                            info!("Topic downloaded: {}", topic.topic_meta.title);
+                        }
+                    }
                 }
                 Some(task) => {
                     let torrent_data = toloka_client
