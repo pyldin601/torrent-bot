@@ -6,7 +6,7 @@ use tracing::{debug, info};
 use crate::clients::telegram::TelegramBotClient;
 use crate::clients::toloka::{TolokaClient, TolokaClientError};
 use crate::clients::transmission::{TransmissionClient, TransmissionClientError};
-use crate::task_db::{StorageError, Task, TaskDb};
+use crate::task_db::{StorageError, Task, TaskDb, TaskStatus};
 
 #[derive(Debug, Error)]
 pub(crate) enum SyncError {
@@ -65,6 +65,7 @@ pub(crate) async fn sync(
                         topic_title: topic.topic_meta.title.clone(),
                         topic_download_registered_at: topic.download_meta.registered_at,
                         transmission_torrent_id: torrent_id,
+                        last_task_status: TaskStatus::Added,
                     })?;
 
                     telegram_bot_client
@@ -86,6 +87,7 @@ pub(crate) async fn sync(
                         topic_title: topic.topic_meta.title.clone(),
                         topic_download_registered_at: topic.download_meta.registered_at,
                         transmission_torrent_id: torrent_id,
+                        last_task_status: TaskStatus::Added,
                     })?;
 
                     telegram_bot_client
