@@ -6,7 +6,7 @@ use tracing::{debug, info};
 use crate::clients::telegram::TelegramBotClient;
 use crate::clients::toloka::{TolokaClient, TolokaClientError};
 use crate::clients::transmission::{TransmissionClient, TransmissionClientError};
-use crate::task_db::{StorageError, Task, TaskDb};
+use crate::task_db::{StorageError, Task, TaskDb, TaskStatus};
 
 #[derive(Debug, Error)]
 pub(crate) enum SyncError {
@@ -47,6 +47,22 @@ pub(crate) async fn sync(
                     if task.topic_download_registered_at == topic.download_meta.registered_at =>
                 {
                     debug!("Topic unchanged: {}", topic.topic_meta.title);
+
+                    if matches!(task.task_status, TaskStatus::Added) {
+                        let is_downloaded = transmission_client
+                            .get_is_downloaded(task.transmission_torrent_id)
+                            .await?;
+
+                        if is_downloaded {
+                            task_db.mark_task_as_finished_by_topic_id(&task.topic_id)?;
+
+                            telegram_bot_client
+                                .send_torrent_downloaded(&task.topic_title)
+                                .await;
+
+                            info!("Torrent downloaded: {}", topic.topic_meta.title);
+                        }
+                    }
                 }
                 Some(task) => {
                     let torrent_data = toloka_client
@@ -65,6 +81,7 @@ pub(crate) async fn sync(
                         topic_title: topic.topic_meta.title.clone(),
                         topic_download_registered_at: topic.download_meta.registered_at,
                         transmission_torrent_id: torrent_id,
+                        task_status: TaskStatus::Added,
                     })?;
 
                     telegram_bot_client
@@ -86,6 +103,7 @@ pub(crate) async fn sync(
                         topic_title: topic.topic_meta.title.clone(),
                         topic_download_registered_at: topic.download_meta.registered_at,
                         transmission_torrent_id: torrent_id,
+                        task_status: TaskStatus::Added,
                     })?;
 
                     telegram_bot_client
