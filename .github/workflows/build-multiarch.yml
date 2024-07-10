@@ -28,7 +28,6 @@ jobs:
               : context.payload.ref.replace(/^refs\/(tags|heads)\//, '');
 
   build:
-    environment: AWS
     needs:
       - tag
     name: Build
