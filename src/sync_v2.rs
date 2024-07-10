@@ -48,7 +48,7 @@ pub(crate) async fn sync(
                 {
                     debug!("Topic unchanged: {}", topic.topic_meta.title);
 
-                    if matches!(task.last_task_status, TaskStatus::Added) {
+                    if matches!(task.task_status, TaskStatus::Added) {
                         let is_downloaded = transmission_client
                             .get_is_downloaded(task.transmission_torrent_id)
                             .await?;
@@ -81,7 +81,7 @@ pub(crate) async fn sync(
                         topic_title: topic.topic_meta.title.clone(),
                         topic_download_registered_at: topic.download_meta.registered_at,
                         transmission_torrent_id: torrent_id,
-                        last_task_status: TaskStatus::Added,
+                        task_status: TaskStatus::Added,
                     })?;
 
                     telegram_bot_client
@@ -103,7 +103,7 @@ pub(crate) async fn sync(
                         topic_title: topic.topic_meta.title.clone(),
                         topic_download_registered_at: topic.download_meta.registered_at,
                         transmission_torrent_id: torrent_id,
-                        last_task_status: TaskStatus::Added,
+                        task_status: TaskStatus::Added,
                     })?;
 
                     telegram_bot_client

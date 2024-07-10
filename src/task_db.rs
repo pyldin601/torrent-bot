@@ -33,7 +33,7 @@ pub(crate) struct Task {
     pub(crate) topic_download_registered_at: String,
     pub(crate) transmission_torrent_id: i64,
     #[serde(default)]
-    pub(crate) last_task_status: TaskStatus,
+    pub(crate) task_status: TaskStatus,
 }
 
 impl TaskDb {
@@ -73,7 +73,7 @@ impl TaskDb {
             .iter_mut()
             .filter(|task| &task.topic_id == topic_id)
             .for_each(|task| {
-                task.last_task_status = TaskStatus::Finished;
+                task.task_status = TaskStatus::Finished;
             });
 
         self.save_tasks(&tasks)
