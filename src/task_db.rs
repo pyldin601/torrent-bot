@@ -15,11 +15,25 @@ pub(crate) enum StorageError {
 type StorageResult<T> = Result<T, StorageError>;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub(crate) enum TaskStatus {
+    Added,
+    Finished,
+}
+
+impl Default for TaskStatus {
+    fn default() -> Self {
+        Self::Added
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct Task {
     pub(crate) topic_id: String,
     pub(crate) topic_title: String,
     pub(crate) topic_download_registered_at: String,
     pub(crate) transmission_torrent_id: i64,
+    #[serde(default)]
+    pub(crate) last_task_status: TaskStatus,
 }
 
 impl TaskDb {
@@ -49,6 +63,20 @@ impl TaskDb {
                 .filter(|t| &t.topic_id != topic_id)
                 .collect(),
         )
+    }
+
+    #[tracing::instrument(err, skip(self))]
+    pub(crate) fn mark_task_as_finished_by_topic_id(&self, topic_id: &str) -> StorageResult<()> {
+        let mut tasks = self.get_tasks()?;
+
+        tasks
+            .iter_mut()
+            .filter(|task| &task.topic_id == topic_id)
+            .for_each(|task| {
+                task.last_task_status = TaskStatus::Finished;
+            });
+
+        self.save_tasks(&tasks)
     }
 
     #[tracing::instrument(err, skip(self))]
