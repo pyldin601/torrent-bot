@@ -34,7 +34,7 @@ jobs:
     uses: pyldin601/build-multiarch-on-aws-spots/.github/workflows/build-multiarch-on-aws-spots.yml@506598970a6bff5f6f75d95c3db37b35975c49e1
     with:
       DOCKER_IMAGE_TAG: ${{ needs.tag.outputs.TAG }}
-      DOCKER_IMAGE_NAME: pldin601/torrent-bot
+      DOCKER_IMAGE_NAME: pldin601/torrent-bot-runner
       WORKFLOW_CHECKOUT: 506598970a6bff5f6f75d95c3db37b35975c49e1
       AWS_REGION: eu-west-2
       BUILD_DOCKERFILE: ./runner.Dockerfile
