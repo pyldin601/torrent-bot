@@ -31,10 +31,10 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Unable to initialize toloka client");
     let transmission_client = TransmissionClient::create(
-        config.transmission.url.clone(),
-        config.transmission.username.clone(),
-        config.transmission.password.clone(),
-        config.transmission.download_directory.clone(),
+        config.transmission.url,
+        config.transmission.username,
+        config.transmission.password,
+        Some(config.transmission.download_directory),
         config.transmission.dry_run,
     );
     let telegram_client =
