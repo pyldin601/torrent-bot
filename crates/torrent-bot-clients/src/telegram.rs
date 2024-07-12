@@ -3,6 +3,7 @@ use teloxide::prelude::{ChatId, Requester};
 use teloxide::types::Recipient;
 use tracing::error;
 
+#[derive(Clone)]
 pub enum TelegramBotClient {
     Active { bot: Bot, recipient: Recipient },
     Inactive,
@@ -59,6 +60,14 @@ impl TelegramBotClient {
                 .send_message(recipient.clone(), format!("Downloaded: {}", title))
                 .await
             {
+                error!(?error, "Failed to send message to telegram bot");
+            }
+        }
+    }
+
+    pub async fn send_message(&self, text: &str) {
+        if let TelegramBotClient::Active { bot, recipient } = self {
+            if let Err(error) = bot.send_message(recipient.clone(), text).await {
                 error!(?error, "Failed to send message to telegram bot");
             }
         }

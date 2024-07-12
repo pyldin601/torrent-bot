@@ -7,6 +7,7 @@ use transmission_rpc::types::{
     BasicAuth, Id, RpcResponse, TorrentAddArgs, TorrentAddedOrDuplicate,
 };
 
+#[derive(Clone)]
 pub struct TransmissionClient {
     client: Arc<Mutex<TransClient>>,
     download_dir: Option<String>,

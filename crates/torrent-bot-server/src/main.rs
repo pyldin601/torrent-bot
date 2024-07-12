@@ -6,6 +6,7 @@ use actix_web::web::Data;
 use futures_lite::FutureExt;
 use tracing::{error, info};
 
+use torrent_bot_clients::telegram::TelegramBotClient;
 use torrent_bot_clients::transmission::TransmissionClient;
 
 use crate::config::Config;
@@ -26,19 +27,34 @@ async fn main() -> std::io::Result<()> {
     let shutdown_timeout = config.shutdown_timeout.clone();
     let bind_address = config.bind_address.clone();
 
-    let transmission_client = Arc::new(TransmissionClient::create(
+    let transmission_client = TransmissionClient::create(
         config.transmission.url,
         config.transmission.username,
         config.transmission.password,
         None,
         false,
-    ));
+    );
+
+    let telegram_client = TelegramBotClient::create(
+        Some(config.telegram.bot_token),
+        Some(
+            config
+                .telegram
+                .bot_chat_id
+                .parse()
+                .expect("Unable to parse telegram bot chat_id"),
+        ),
+    );
 
     let server = HttpServer::new({
         move || {
             App::new()
-                .app_data(Data::new(Arc::clone(&transmission_client)))
-                .service(web::resource("/").route(web::get().to(handlers::dummy::dummy)))
+                .app_data(Data::new(Clone::clone(&transmission_client)))
+                .app_data(Data::new(Clone::clone(&telegram_client)))
+                .service(
+                    web::resource("/internal/telegram-bot/send-message")
+                        .route(web::post().to(handlers::telegram_bot::send_message)),
+                )
                 .route(
                     "/health/alive",
                     web::get().to(handlers::readiness_check::readiness_check),
