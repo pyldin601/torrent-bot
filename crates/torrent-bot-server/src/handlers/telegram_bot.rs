@@ -10,9 +10,9 @@ pub(crate) struct SendMessageJson {
 
 pub(crate) async fn send_message(
     json: web::Json<SendMessageJson>,
-    telegram_bott: web::Data<TelegramBotClient>,
+    telegram_bot: web::Data<TelegramBotClient>,
 ) -> impl Responder {
-    telegram_bott.send_message(&json.text).await;
+    telegram_bot.send_message(&json.text).await;
 
     HttpResponse::Ok().finish()
 }
