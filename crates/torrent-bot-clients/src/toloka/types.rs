@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Debug, PartialEq)]
 pub enum Category {
     Movies,
@@ -5,13 +7,14 @@ pub enum Category {
     Other(String),
 }
 
-impl ToString for Category {
-    fn to_string(&self) -> String {
-        String::from(match self {
+impl Display for Category {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = String::from(match self {
             Self::Movies => "Movies",
             Self::Series => "Series",
             Self::Other(_) => "Other",
-        })
+        });
+        write!(f, "{}", str)
     }
 }
 
