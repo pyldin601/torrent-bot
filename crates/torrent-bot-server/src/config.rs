@@ -21,7 +21,7 @@ pub(crate) struct TelegramCredentials {
     #[serde(default, rename = "telegram_bot_token")]
     pub(crate) bot_token: String,
     #[serde(default, rename = "telegram_bot_chat_id")]
-    pub(crate) bot_chat_id: u64,
+    pub(crate) bot_chat_id: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
