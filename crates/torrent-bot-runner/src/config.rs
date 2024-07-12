@@ -72,14 +72,13 @@ pub struct TransmissionConfig {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     pub storage_file: String,
+    pub client_endpoint: String,
     #[serde(default)]
     pub wipeout_mode: bool,
     #[serde(flatten)]
     pub toloka: TolokaCredentials,
     #[serde(flatten)]
     pub transmission: TransmissionConfig,
-    #[serde(flatten)]
-    pub telegram: TelegramCredentials,
 }
 
 impl Config {

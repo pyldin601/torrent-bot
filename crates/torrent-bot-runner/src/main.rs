@@ -5,10 +5,12 @@ use torrent_bot_clients::telegram::TelegramBotClient;
 use torrent_bot_clients::toloka::TolokaClient;
 use torrent_bot_clients::transmission::TransmissionClient;
 
+use crate::client::Client;
 use crate::config::Config;
 use crate::sync_v2::sync;
 use crate::task_db::TaskDb;
 
+mod client;
 mod config;
 mod sync_v2;
 mod task_db;
@@ -37,14 +39,13 @@ async fn main() -> std::io::Result<()> {
         Some(config.transmission.download_directory),
         config.transmission.dry_run,
     );
-    let telegram_client =
-        TelegramBotClient::create(config.telegram.bot_token, config.telegram.bot_chat_id);
+    let client = Client::create(&config.client_endpoint);
 
     if let Err(error) = sync(
         toloka_client,
         transmission_client,
         storage,
-        telegram_client,
+        client,
         config.wipeout_mode,
     )
     .await

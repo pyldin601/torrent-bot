@@ -7,6 +7,7 @@ use torrent_bot_clients::telegram::TelegramBotClient;
 use torrent_bot_clients::toloka::{TolokaClient, TolokaClientError};
 use torrent_bot_clients::transmission::{TransmissionClient, TransmissionClientError};
 
+use crate::client::Client;
 use crate::task_db::{StorageError, Task, TaskDb, TaskStatus};
 
 #[derive(Debug, Error)]
@@ -23,7 +24,7 @@ pub(crate) async fn sync(
     toloka_client: TolokaClient,
     transmission_client: TransmissionClient,
     task_db: TaskDb,
-    telegram_bot_client: TelegramBotClient,
+    client: Client,
     wipeout_mode: bool,
 ) -> Result<(), SyncError> {
     debug!("Loading tasks...");
@@ -57,9 +58,7 @@ pub(crate) async fn sync(
                         if is_downloaded {
                             task_db.mark_task_as_finished_by_topic_id(&task.topic_id)?;
 
-                            telegram_bot_client
-                                .send_torrent_downloaded(&task.topic_title)
-                                .await;
+                            client.send_torrent_downloaded(&task.topic_title).await;
 
                             info!("Torrent downloaded: {}", topic.topic_meta.title);
                         }
@@ -85,9 +84,7 @@ pub(crate) async fn sync(
                         task_status: TaskStatus::Added,
                     })?;
 
-                    telegram_bot_client
-                        .send_topic_updated(&topic.topic_meta.title)
-                        .await;
+                    client.send_topic_updated(&topic.topic_meta.title).await;
 
                     info!("Topic updated: {}", topic.topic_meta.title);
                 }
@@ -107,9 +104,7 @@ pub(crate) async fn sync(
                         task_status: TaskStatus::Added,
                     })?;
 
-                    telegram_bot_client
-                        .send_topic_added(&topic.topic_meta.title)
-                        .await;
+                    client.send_topic_added(&topic.topic_meta.title).await;
 
                     info!("Topic added: {}", topic.topic_meta.title);
                 }
@@ -127,9 +122,7 @@ pub(crate) async fn sync(
             .await?;
         task_db.delete_task_by_topic_id(&task.topic_id)?;
 
-        telegram_bot_client
-            .send_topic_deleted(&task.topic_title)
-            .await;
+        client.send_topic_deleted(&task.topic_title).await;
 
         info!("Topic deleted: {}", task.topic_title);
     }

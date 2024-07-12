@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::serde_helpers::deserialize_i64;
+
 fn default_bind_address() -> String {
     "0.0.0.0:8080".to_string()
 }
@@ -20,8 +22,12 @@ pub(crate) struct TolokaCredentials {
 pub(crate) struct TelegramCredentials {
     #[serde(default, rename = "telegram_bot_token")]
     pub(crate) bot_token: String,
-    #[serde(default, rename = "telegram_bot_chat_id")]
-    pub(crate) bot_chat_id: String,
+    #[serde(
+        default,
+        rename = "telegram_bot_chat_id",
+        deserialize_with = "deserialize_i64"
+    )]
+    pub(crate) bot_chat_id: i64,
 }
 
 #[derive(Clone, Debug, Deserialize)]

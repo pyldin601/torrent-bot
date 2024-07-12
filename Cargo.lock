@@ -2656,6 +2656,7 @@ dependencies = [
  "actix-rt",
  "dotenv",
  "envy",
+ "reqwest 0.12.5",
  "serde",
  "serde_json",
  "sled",
