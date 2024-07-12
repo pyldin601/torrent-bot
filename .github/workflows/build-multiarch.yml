@@ -39,7 +39,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          dockerfile: runner.Dockerfile
+          file: runner.Dockerfile
           push: true
           tags: pldin601/torrent-bot-runner:${{ needs.tag.outputs.TAG }}
 
@@ -58,6 +58,6 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          dockerfile: server.Dockerfile
+          file: server.Dockerfile
           push: true
           tags: pldin601/torrent-bot-server:${{ needs.tag.outputs.TAG }}
