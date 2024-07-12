@@ -1,6 +1,2 @@
 [workspace]
-members = [
-    "crates/torrent-bot-runner",
-    "crates/torrent-bot-clients",
-    "crates/torrent-bot-server"
-]
+members = ["crates/*"]

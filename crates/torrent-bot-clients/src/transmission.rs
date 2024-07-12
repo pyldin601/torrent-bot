@@ -9,7 +9,7 @@ use transmission_rpc::types::{
 
 pub struct TransmissionClient {
     client: Arc<Mutex<TransClient>>,
-    download_dir: String,
+    download_dir: Option<String>,
     dry_run: bool,
 }
 
@@ -19,6 +19,8 @@ pub enum TransmissionClientError {
     Duplicate,
     #[error("Erroneous result: {0}")]
     ErroneousResult(String),
+    #[error("Missing download dir")]
+    MissingDownloadDir,
     #[error("Unable to perform RPC request on transmission server: {0}")]
     TransmissionError(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
@@ -30,7 +32,7 @@ impl TransmissionClient {
         url: String,
         username: Option<String>,
         password: Option<String>,
-        download_dir: String,
+        download_dir: Option<String>,
         dry_run: bool,
     ) -> Self {
         let url = url
@@ -58,6 +60,10 @@ impl TransmissionClient {
     ) -> TransmissionClientResult<i64> {
         let metainfo = general_purpose::STANDARD.encode(torrent_file_content);
         let dry_run = self.dry_run;
+        let download_dir = self
+            .download_dir
+            .as_ref()
+            .ok_or_else(|| TransmissionClientError::MissingDownloadDir)?;
 
         let RpcResponse {
             arguments,
@@ -67,7 +73,7 @@ impl TransmissionClient {
             .lock()
             .torrent_add(TorrentAddArgs {
                 metainfo: Some(metainfo.clone()),
-                download_dir: Some(format!("{}/{}/", &self.download_dir, path)),
+                download_dir: Some(format!("{}/{}/", download_dir, path)),
                 paused: Some(dry_run),
                 ..TorrentAddArgs::default()
             })
