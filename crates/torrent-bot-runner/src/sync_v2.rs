@@ -3,9 +3,10 @@ use std::collections::HashSet;
 use thiserror::Error;
 use tracing::{debug, info};
 
-use crate::clients::telegram::TelegramBotClient;
-use crate::clients::toloka::{TolokaClient, TolokaClientError};
-use crate::clients::transmission::{TransmissionClient, TransmissionClientError};
+use torrent_bot_clients::telegram::TelegramBotClient;
+use torrent_bot_clients::toloka::{TolokaClient, TolokaClientError};
+use torrent_bot_clients::transmission::{TransmissionClient, TransmissionClientError};
+
 use crate::task_db::{StorageError, Task, TaskDb, TaskStatus};
 
 #[derive(Debug, Error)]

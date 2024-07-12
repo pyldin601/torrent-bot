@@ -5,7 +5,7 @@ use serde::Serialize;
 use tracing::warn;
 
 #[derive(Debug)]
-pub(crate) enum Category {
+pub enum Category {
     Movies,
     Series,
     Other(String),
@@ -21,20 +21,20 @@ impl ToString for Category {
     }
 }
 
-pub(crate) struct TopicMeta {
-    pub(crate) topic_id: String,
-    pub(crate) title: String,
-    pub(crate) category: Category,
+pub struct TopicMeta {
+    pub topic_id: String,
+    pub title: String,
+    pub category: Category,
 }
 
-pub(crate) struct DownloadMeta {
-    pub(crate) registered_at: String,
-    pub(crate) download_id: String,
+pub struct DownloadMeta {
+    pub registered_at: String,
+    pub download_id: String,
 }
 
-pub(crate) struct Topic {
-    pub(crate) topic_meta: TopicMeta,
-    pub(crate) download_meta: DownloadMeta,
+pub struct Topic {
+    pub topic_meta: TopicMeta,
+    pub download_meta: DownloadMeta,
 }
 
 const TOLOKA_HOST: &str = "https://toloka.to";
@@ -49,12 +49,12 @@ struct LoginForm {
     login: String,
 }
 
-pub(crate) struct TolokaClient {
+pub struct TolokaClient {
     client: Client,
 }
 
 #[derive(Debug, thiserror::Error)]
-pub(crate) enum TolokaClientError {
+pub enum TolokaClientError {
     #[error("Invalid login or password")]
     Unauthorized,
     #[error("Unexpected status code: {0}")]
@@ -63,10 +63,10 @@ pub(crate) enum TolokaClientError {
     Request(#[from] reqwest::Error),
 }
 
-pub(crate) type TolokaClientResult<T> = Result<T, TolokaClientError>;
+pub type TolokaClientResult<T> = Result<T, TolokaClientError>;
 
 impl TolokaClient {
-    pub(crate) async fn create(username: &str, password: &str) -> TolokaClientResult<TolokaClient> {
+    pub async fn create(username: &str, password: &str) -> TolokaClientResult<TolokaClient> {
         let client = Client::builder()
             .redirect(Policy::none())
             .cookie_store(true)
@@ -95,7 +95,7 @@ impl TolokaClient {
         Ok(Self { client })
     }
 
-    pub(crate) async fn download(&self, download_id: &str) -> TolokaClientResult<Vec<u8>> {
+    pub async fn download(&self, download_id: &str) -> TolokaClientResult<Vec<u8>> {
         let response = self
             .client
             .get(format!("{}/download.php?id={}", TOLOKA_HOST, download_id))
@@ -213,7 +213,7 @@ impl TolokaClient {
             }))
     }
 
-    pub(crate) async fn get_watched_topics(&self) -> TolokaClientResult<Vec<Topic>> {
+    pub async fn get_watched_topics(&self) -> TolokaClientResult<Vec<Topic>> {
         let topics_meta = self.get_watched_topics_meta().await?;
         let mut topics = vec![];
 

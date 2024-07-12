@@ -1,14 +1,14 @@
 use tracing::{error, Level};
 use tracing_subscriber::FmtSubscriber;
 
-use crate::clients::telegram::TelegramBotClient;
-use crate::clients::toloka::TolokaClient;
-use crate::clients::transmission::TransmissionClient;
+use torrent_bot_clients::telegram::TelegramBotClient;
+use torrent_bot_clients::toloka::TolokaClient;
+use torrent_bot_clients::transmission::TransmissionClient;
+
 use crate::config::Config;
 use crate::sync_v2::sync;
 use crate::task_db::TaskDb;
 
-mod clients;
 mod config;
 mod sync_v2;
 mod task_db;

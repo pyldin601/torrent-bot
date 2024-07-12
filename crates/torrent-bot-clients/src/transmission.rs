@@ -7,14 +7,14 @@ use transmission_rpc::types::{
     BasicAuth, Id, RpcResponse, TorrentAddArgs, TorrentAddedOrDuplicate,
 };
 
-pub(crate) struct TransmissionClient {
+pub struct TransmissionClient {
     client: Arc<Mutex<TransClient>>,
     download_dir: String,
     dry_run: bool,
 }
 
 #[derive(thiserror::Error, Debug)]
-pub(crate) enum TransmissionClientError {
+pub enum TransmissionClientError {
     #[error("Torrent already exists")]
     Duplicate,
     #[error("Erroneous result: {0}")]
@@ -23,10 +23,10 @@ pub(crate) enum TransmissionClientError {
     TransmissionError(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 
-pub(crate) type TransmissionClientResult<T> = Result<T, TransmissionClientError>;
+pub type TransmissionClientResult<T> = Result<T, TransmissionClientError>;
 
 impl TransmissionClient {
-    pub(crate) fn create(
+    pub fn create(
         url: String,
         username: Option<String>,
         password: Option<String>,
@@ -51,7 +51,7 @@ impl TransmissionClient {
         }
     }
 
-    pub(crate) async fn add(
+    pub async fn add(
         &self,
         torrent_file_content: Vec<u8>,
         path: &str,
@@ -79,10 +79,7 @@ impl TransmissionClient {
         }
     }
 
-    pub(crate) async fn remove_without_data(
-        &self,
-        torrent_id: i64,
-    ) -> TransmissionClientResult<()> {
+    pub async fn remove_without_data(&self, torrent_id: i64) -> TransmissionClientResult<()> {
         let RpcResponse { .. } = self
             .client
             .lock()
@@ -92,7 +89,7 @@ impl TransmissionClient {
         Ok(())
     }
 
-    pub(crate) async fn remove_with_data(&self, torrent_id: i64) -> TransmissionClientResult<()> {
+    pub async fn remove_with_data(&self, torrent_id: i64) -> TransmissionClientResult<()> {
         let RpcResponse { .. } = self
             .client
             .lock()
@@ -102,10 +99,7 @@ impl TransmissionClient {
         Ok(())
     }
 
-    pub(crate) async fn get_is_downloaded(
-        &self,
-        torrent_id: i64,
-    ) -> TransmissionClientResult<bool> {
+    pub async fn get_is_downloaded(&self, torrent_id: i64) -> TransmissionClientResult<bool> {
         let RpcResponse { arguments, .. } = self
             .client
             .lock()
