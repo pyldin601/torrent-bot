@@ -1,6 +1,5 @@
 use reqwest::{Client, StatusCode};
 use reqwest::redirect::Policy;
-use scraper::{Html, Selector};
 use serde::Serialize;
 use tracing::warn;
 
@@ -110,41 +109,9 @@ impl TolokaClient {
         }
 
         let document = response.text().await?;
-        let html = Html::parse_document(&document);
+        let download_meta = parsers::parse_download_meta(&document);
 
-        let download_selector = Selector::parse(".piwik_download").unwrap();
-
-        let registered_at = {
-            let bt_tbl_selector = Selector::parse("table.btTbl").unwrap();
-            let bt_row_selector = Selector::parse("tr.row4_to").unwrap();
-            let bt_col_selector = Selector::parse("td.genmed").unwrap();
-
-            let parse_registered_at = || -> Option<String> {
-                Some(
-                    html.select(&bt_tbl_selector)
-                        .next()?
-                        .select(&bt_row_selector)
-                        .skip(1)
-                        .next()?
-                        .select(&bt_col_selector)
-                        .skip(1)
-                        .next()?
-                        .inner_html()
-                        .replace("&nbsp;", ""),
-                )
-            };
-
-            parse_registered_at()
-        };
-
-        Ok(html
-            .select(&download_selector)
-            .next()
-            .map(|e| e.value().attr("href").unwrap_or_default().to_string())
-            .map(|url| DownloadMeta {
-                download_id: url.replace("download.php?id=", ""),
-                registered_at: registered_at.unwrap_or_default(),
-            }))
+        Ok(download_meta)
     }
 
     pub async fn get_watched_topics(&self) -> TolokaClientResult<Vec<Topic>> {
