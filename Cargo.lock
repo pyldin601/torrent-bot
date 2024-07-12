@@ -2195,13 +2195,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "torrent-bot-runner"
+name = "torrent-bot-clients"
 version = "1.1.0"
 dependencies = [
  "actix-rt",
  "base64 0.22.1",
- "dotenv",
- "envy",
  "parking_lot 0.12.3",
  "reqwest 0.12.5",
  "scraper",
@@ -2213,6 +2211,22 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "transmission-rpc",
+]
+
+[[package]]
+name = "torrent-bot-runner"
+version = "1.1.0"
+dependencies = [
+ "actix-rt",
+ "dotenv",
+ "envy",
+ "serde",
+ "serde_json",
+ "sled",
+ "thiserror",
+ "torrent-bot-clients",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
