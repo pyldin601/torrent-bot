@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
         Some(config.transmission.download_directory),
         config.transmission.dry_run,
     );
-    let client = Client::create(&config.client_endpoint);
+    let client = Client::create(&config.server_endpoint);
 
     if let Err(error) = sync(
         toloka_client,

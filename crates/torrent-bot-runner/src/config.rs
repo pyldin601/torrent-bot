@@ -72,7 +72,7 @@ pub struct TransmissionConfig {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     pub storage_file: String,
-    pub client_endpoint: String,
+    pub server_endpoint: String,
     #[serde(default)]
     pub wipeout_mode: bool,
     #[serde(flatten)]
