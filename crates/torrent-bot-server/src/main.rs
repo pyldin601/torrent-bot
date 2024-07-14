@@ -14,6 +14,7 @@ use crate::config::Config;
 mod config;
 mod handlers;
 mod serde_helpers;
+mod telegram_service;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -36,10 +37,8 @@ async fn main() -> std::io::Result<()> {
         false,
     );
 
-    let telegram_client = TelegramBotClient::create(
-        Some(config.telegram.bot_token),
-        Some(config.telegram.bot_chat_id),
-    );
+    let telegram_client =
+        TelegramBotClient::create(config.telegram.bot_token, config.telegram.bot_chat_id);
 
     let server = HttpServer::new({
         move || {
