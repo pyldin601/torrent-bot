@@ -63,6 +63,12 @@ async fn main() -> std::io::Result<()> {
     .bind(bind_address)?
     .run();
 
+    actix_rt::spawn({
+        let telegram_client = telegram_client.clone();
+
+        async move { telegram_client.start_repl().await }
+    });
+
     let server_handle = server.handle();
 
     actix_rt::spawn({
