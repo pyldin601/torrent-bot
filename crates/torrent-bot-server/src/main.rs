@@ -104,6 +104,10 @@ async fn main() -> std::io::Result<()> {
                                     .collect::<Vec<_>>()
                                     .join("\n");
 
+                                if titles.is_empty() {
+                                    return telegram_client.send_message("No results...").await;
+                                }
+
                                 telegram_client.send_message(&titles).await;
                             }
                             Err(error) => {

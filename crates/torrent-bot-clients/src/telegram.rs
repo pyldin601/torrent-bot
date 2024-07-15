@@ -3,14 +3,13 @@ use futures::channel::mpsc;
 use futures::SinkExt;
 use teloxide::{Bot, macros};
 use teloxide::prelude::*;
-use teloxide::types::Recipient;
 use teloxide::utils::command::BotCommands;
 use tracing::error;
 
 #[derive(Clone)]
 pub struct TelegramBotClient {
     bot: Bot,
-    recipient: Recipient,
+    chat_id: ChatId,
     command_stream: Option<mpsc::Sender<BotCommand>>,
 }
 
@@ -31,11 +30,11 @@ pub enum BotCommand {
 impl TelegramBotClient {
     pub fn create(bot_token: String, bot_chat_id: i64) -> TelegramBotClient {
         let bot = Bot::new(bot_token);
-        let recipient = Recipient::Id(ChatId(bot_chat_id));
+        let chat_id = ChatId(bot_chat_id);
 
         TelegramBotClient {
             bot,
-            recipient,
+            chat_id,
             command_stream: None,
         }
     }
@@ -48,12 +47,18 @@ impl TelegramBotClient {
 
     pub fn start_repl(&mut self) -> Option<JoinHandle<()>> {
         if let Some(tx) = self.command_stream.take() {
+            let chat_id = self.chat_id.clone();
+
             return Some(actix_rt::spawn(BotCommand::repl(
                 self.bot.clone(),
-                move |bot_command: BotCommand| {
+                move |bot_command: BotCommand, msg: Message| {
                     let mut tx = tx.clone();
 
                     async move {
+                        if msg.chat.id != chat_id {
+                            return Ok(());
+                        }
+
                         if let Err(error) = tx.send(bot_command).await {
                             error!(?error, "Failed sending command to the channel");
                         }
@@ -68,7 +73,7 @@ impl TelegramBotClient {
     }
 
     pub async fn send_message(&self, text: &str) {
-        if let Err(error) = self.bot.send_message(self.recipient.clone(), text).await {
+        if let Err(error) = self.bot.send_message(self.chat_id, text).await {
             error!(?error, "Failed to send message to telegram bot");
         }
     }
@@ -76,10 +81,7 @@ impl TelegramBotClient {
     pub async fn send_descriptions(&self) {
         if let Err(error) = self
             .bot
-            .send_message(
-                self.recipient.clone(),
-                BotCommand::descriptions().to_string(),
-            )
+            .send_message(self.chat_id, BotCommand::descriptions().to_string())
             .await
         {
             error!(?error, "Failed to send descriptions to telegram bot");
