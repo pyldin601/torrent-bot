@@ -2636,6 +2636,7 @@ version = "1.1.0"
 dependencies = [
  "actix-rt",
  "base64 0.22.1",
+ "futures",
  "parking_lot 0.12.3",
  "reqwest 0.12.5",
  "scraper",

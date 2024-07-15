@@ -1,7 +1,8 @@
-use teloxide::Bot;
-use teloxide::macros::BotCommands;
+use actix_rt::task::JoinHandle;
+use futures::channel::mpsc;
+use futures::SinkExt;
+use teloxide::{Bot, macros};
 use teloxide::prelude::*;
-use teloxide::repls::CommandReplExt;
 use teloxide::types::Recipient;
 use teloxide::utils::command::BotCommands;
 use tracing::error;
@@ -10,14 +11,15 @@ use tracing::error;
 pub struct TelegramBotClient {
     bot: Bot,
     recipient: Recipient,
+    command_stream: Option<mpsc::Sender<BotCommand>>,
 }
 
-#[derive(BotCommands, Clone)]
+#[derive(macros::BotCommands, Clone)]
 #[command(
     rename_rule = "lowercase",
     description = "These commands are supported:"
 )]
-enum Command {
+pub enum BotCommand {
     #[command(description = "display this text.")]
     Help,
     #[command(description = "search for a topic.")]
@@ -31,76 +33,56 @@ impl TelegramBotClient {
         let bot = Bot::new(bot_token);
         let recipient = Recipient::Id(ChatId(bot_chat_id));
 
-        TelegramBotClient { bot, recipient }
+        TelegramBotClient {
+            bot,
+            recipient,
+            command_stream: None,
+        }
     }
 
-    pub async fn start_repl(&self) {
-        Command::repl(
-            self.bot.clone(),
-            |bot: Bot, msg: Message, command: Command| async move {
-                match command {
-                    Command::Help => {
-                        bot.send_message(msg.chat.id, Command::descriptions().to_string())
-                            .await?;
+    pub fn get_command_stream(&mut self) -> mpsc::Receiver<BotCommand> {
+        let (tx, rx) = mpsc::channel(0);
+        self.command_stream.replace(tx);
+        rx
+    }
+
+    pub fn start_repl(&mut self) -> Option<JoinHandle<()>> {
+        if let Some(tx) = self.command_stream.take() {
+            return Some(actix_rt::spawn(BotCommand::repl(
+                self.bot.clone(),
+                move |bot_command: BotCommand| {
+                    let mut tx = tx.clone();
+
+                    async move {
+                        if let Err(error) = tx.send(bot_command).await {
+                            error!(?error, "Failed sending command to the channel");
+                        }
+
+                        Ok(())
                     }
-                    Command::Search { query } => {
-                        // TODO Search topics
-                        bot.send_dice(msg.chat.id).await?;
-                    }
-                    Command::Add { topic_id } => {
-                        // TODO Add topic to bookmarks
-                        bot.send_dice(msg.chat.id).await?;
-                    }
-                }
-
-                return Ok(());
-            },
-        )
-        .await;
-    }
-
-    pub async fn send_topic_added(&self, title: &str) {
-        if let Err(error) = self
-            .bot
-            .send_message(self.recipient.clone(), format!("Added: {}", title))
-            .await
-        {
-            error!(?error, "Failed to send message to telegram bot");
+                },
+            )));
         }
-    }
-    pub async fn send_topic_deleted(&self, title: &str) {
-        if let Err(error) = self
-            .bot
-            .send_message(self.recipient.clone(), format!("Deleted: {}", title))
-            .await
-        {
-            error!(?error, "Failed to send message to telegram bot");
-        }
-    }
 
-    pub async fn send_topic_updated(&self, title: &str) {
-        if let Err(error) = self
-            .bot
-            .send_message(self.recipient.clone(), format!("Updated: {}", title))
-            .await
-        {
-            error!(?error, "Failed to send message to telegram bot");
-        }
-    }
-
-    pub async fn send_torrent_downloaded(&self, title: &str) {
-        if let Err(error) = self
-            .bot
-            .send_message(self.recipient.clone(), format!("Downloaded: {}", title))
-            .await
-        {
-            error!(?error, "Failed to send message to telegram bot");
-        }
+        None
     }
 
     pub async fn send_message(&self, text: &str) {
         if let Err(error) = self.bot.send_message(self.recipient.clone(), text).await {
             error!(?error, "Failed to send message to telegram bot");
+        }
+    }
+
+    pub async fn send_descriptions(&self) {
+        if let Err(error) = self
+            .bot
+            .send_message(
+                self.recipient.clone(),
+                BotCommand::descriptions().to_string(),
+            )
+            .await
+        {
+            error!(?error, "Failed to send descriptions to telegram bot");
         }
     }
 }
