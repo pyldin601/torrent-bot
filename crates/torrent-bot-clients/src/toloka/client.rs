@@ -1,6 +1,7 @@
 use reqwest::{Client, StatusCode};
 use reqwest::redirect::Policy;
 use serde::Serialize;
+use serde_json::json;
 use tracing::warn;
 
 use crate::toloka::types::{DownloadMeta, Topic, TopicMeta};
@@ -130,5 +131,23 @@ impl TolokaClient {
         }
 
         Ok(topics)
+    }
+
+    pub async fn get_search_results_meta(&self, query: &str) -> TolokaClientResult<Vec<TopicMeta>> {
+        let response = self
+            .client
+            .get(format!("{}/tracker.php", TOLOKA_HOST))
+            .query(&json!({ "nm": query }))
+            .send()
+            .await?;
+
+        if response.status() != StatusCode::OK {
+            return Err(TolokaClientError::Status(response.status()));
+        }
+
+        let document = response.text().await?;
+        let results_meta = super::parsers::parse_search_results_meta(&document);
+
+        Ok(results_meta)
     }
 }

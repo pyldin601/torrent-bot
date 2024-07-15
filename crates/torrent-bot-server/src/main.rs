@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use actix_rt::signal::unix;
 use actix_web::{App, HttpServer, web};
 use actix_web::web::Data;
@@ -8,6 +6,7 @@ use tracing::{error, info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 use torrent_bot_clients::telegram::{BotCommand, TelegramBotClient};
+use torrent_bot_clients::toloka::TolokaClient;
 use torrent_bot_clients::transmission::TransmissionClient;
 
 use crate::config::Config;
@@ -42,6 +41,9 @@ async fn main() -> std::io::Result<()> {
         None,
         false,
     );
+    let toloka_client = TolokaClient::create(&config.toloka.username, &config.toloka.password)
+        .await
+        .expect("Unable to initialize toloka client");
 
     let telegram_client =
         TelegramBotClient::create(config.telegram.bot_token, config.telegram.bot_chat_id);
@@ -93,8 +95,22 @@ async fn main() -> std::io::Result<()> {
                     BotCommand::Help => {
                         telegram_client.send_descriptions().await;
                     }
-                    BotCommand::Search { .. } => {
-                        telegram_client.send_message("Soon...").await;
+                    BotCommand::Search { query } => {
+                        match toloka_client.get_search_results_meta(&query).await {
+                            Ok(results) => {
+                                let titles = results
+                                    .into_iter()
+                                    .map(|t| format!("🔹 {}", t.title))
+                                    .collect::<Vec<_>>()
+                                    .join("\n");
+
+                                telegram_client.send_message(&titles).await;
+                            }
+                            Err(error) => {
+                                error!(?error, "Unable to search topics");
+                                telegram_client.send_message("Something wrong").await;
+                            }
+                        }
                     }
                     BotCommand::Add { .. } => {
                         telegram_client.send_message("Soon...").await;
