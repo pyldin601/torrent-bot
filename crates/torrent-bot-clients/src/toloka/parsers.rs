@@ -83,12 +83,62 @@ pub(crate) fn parse_download_meta(document: &str) -> Option<DownloadMeta> {
         })
 }
 
+pub(crate) fn parse_search_results_meta(document: &str) -> Vec<TopicMeta> {
+    let html = Html::parse_document(document);
+
+    let table_row_selector = Selector::parse(r#"table.forumline tr"#).unwrap();
+    let table_entries = html.select(&table_row_selector);
+
+    let href_selector = &Selector::parse(r#"a[href]"#).unwrap();
+    let td_selector = &Selector::parse(r#"td"#).unwrap();
+    let b_selector = &Selector::parse(r#"b"#).unwrap();
+
+    let mut topics = vec![];
+
+    for el in table_entries
+        .filter(|el| el.children().filter(|el| el.value().is_element()).count() == 13)
+        .skip(1)
+        .into_iter()
+    {
+        let columns = el.select(&td_selector).collect::<Vec<_>>();
+        let link = columns[2].select(&href_selector).next().unwrap();
+
+        let category_raw = columns[1]
+            .select(&href_selector)
+            .next()
+            .unwrap()
+            .inner_html()
+            .to_string();
+        let topic_id = link.value().attr("href").unwrap_or_default().to_string();
+        let title = link
+            .select(&b_selector)
+            .next()
+            .unwrap()
+            .inner_html()
+            .to_string();
+
+        let category = match category_raw.to_lowercase().as_str() {
+            s if s.contains("фільм") => Category::Movies,
+            s if s.contains("серіал") => Category::Series,
+            other => Category::Other(other.to_string()),
+        };
+
+        topics.push(TopicMeta {
+            topic_id,
+            category,
+            title,
+        });
+    }
+
+    topics
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[actix_rt::test]
-    async fn test_parse_of_watched_topics_meta() {
+    #[test]
+    fn test_parse_of_watched_topics_meta() {
         let document = include_str!("./res/watched_topics.html");
         let topics_meta = parse_watched_topics_meta(document);
 
@@ -99,12 +149,24 @@ mod tests {
         assert_eq!(topics_meta[0].category, Category::Series);
     }
 
-    #[actix_rt::test]
-    async fn test_parse_of_download_meta() {
+    #[test]
+    fn test_parse_of_download_meta() {
         let document = include_str!("./res/single_topic.html");
         let download_meta = parse_download_meta(document).unwrap();
 
         assert_eq!(download_meta.download_id, "693501");
         assert_eq!(download_meta.registered_at, "2024-07-08 14:53");
+    }
+
+    #[test]
+    fn test_parse_search_results() {
+        let document = include_str!("./res/search_results.html");
+        let topics_meta = parse_search_results_meta(document);
+
+        assert_eq!(topics_meta.len(), 42);
+
+        assert_eq!(topics_meta[0].topic_id, "t670174");
+        assert_eq!(topics_meta[0].title, "Матриця: Трилогія / The Matrix: Trilogy (1999-2003) HD-DVDRip 1080p H.265 4xUkr/Eng | Sub 3xUkr/Eng");
+        assert_eq!(topics_meta[0].category, Category::Movies);
     }
 }
