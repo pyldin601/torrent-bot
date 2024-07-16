@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
 use teloxide::{Bot, macros, RequestError};
+use teloxide::dispatching::dialogue::GetChatId;
 use teloxide::prelude::*;
 use teloxide::utils::command::BotCommands;
-use tracing::error;
+use tracing::{error, warn};
 
 use crate::telegram::BotCommandHandler;
 
@@ -42,7 +43,9 @@ impl TelegramBotClient {
         actix_rt::spawn({
             async move {
                 let update_handler = Update::filter_message()
-                    .branch(dptree::entry().filter_command::<BotCommand>().endpoint(
+                    .branch(dptree::entry().filter_command::<BotCommand>().endpoint({
+                        let handler = handler.clone();
+
                         move |bot: Bot, cmd: BotCommand, msg: Message| {
                             let handler = handler.clone();
 
@@ -65,12 +68,28 @@ impl TelegramBotClient {
 
                                 Ok::<(), RequestError>(())
                             }
+                        }
+                    }))
+                    .branch(Update::filter_callback_query().endpoint(
+                        move |bot: Bot, q: CallbackQuery| {
+                            let handler = handler.clone();
+                            let chat_id = q.chat_id();
+
+                            async move {
+                                if let Some(data) = q.data.as_ref() {
+                                    if data.starts_with("add_") {
+                                        let topic_id = data[4..].to_string();
+                                        handler.handle_add_command(&topic_id).await;
+                                        return Ok(());
+                                    }
+                                }
+
+                                warn!(?chat_id, ?q.data, "Unexpected callback data");
+
+                                Ok::<(), RequestError>(())
+                            }
                         },
-                    ))
-                    .branch(
-                        Update::filter_callback_query()
-                            .endpoint(|| async move { Ok::<(), RequestError>(()) }),
-                    );
+                    ));
 
                 Dispatcher::builder(bot, update_handler)
                     .build()
