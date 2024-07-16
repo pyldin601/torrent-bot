@@ -18,6 +18,7 @@ struct LoginForm {
     login: String,
 }
 
+#[derive(Clone)]
 pub struct TolokaClient {
     client: Client,
 }

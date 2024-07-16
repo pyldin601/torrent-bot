@@ -263,6 +263,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-trait"
+version = "0.1.81"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e0c28dcc82d7c8ead5cb13beb15405b57b8546e93215673ff8ca0349a028107"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.60",
+]
+
+[[package]]
 name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2635,6 +2646,7 @@ name = "torrent-bot-clients"
 version = "1.1.0"
 dependencies = [
  "actix-rt",
+ "async-trait",
  "base64 0.22.1",
  "futures",
  "parking_lot 0.12.3",
@@ -2673,6 +2685,7 @@ version = "1.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
+ "async-trait",
  "dotenv",
  "envy",
  "futures-lite",
