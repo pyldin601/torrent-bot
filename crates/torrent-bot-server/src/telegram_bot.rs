@@ -1,6 +1,6 @@
 use tracing::error;
 
-use torrent_bot_clients::telegram::{BotCommandHandler, TelegramBotClient};
+use torrent_bot_clients::telegram::{ActionButton, BotCommandHandler, TelegramBotClient};
 use torrent_bot_clients::toloka::TolokaClient;
 
 pub(crate) struct TelegramBot {
@@ -19,23 +19,44 @@ impl BotCommandHandler<'_> for TelegramBot {
     async fn handle_search_command(&self, query: &str) {
         match self.toloka.get_search_results_meta(&query).await {
             Ok(results) => {
-                let titles = results
-                    .into_iter()
-                    .map(|t| format!("🔹 {}", t.title))
-                    .take(10)
-                    .collect::<Vec<_>>()
-                    .join("\n");
-
-                if titles.is_empty() {
-                    return self.client.send_message("No results...").await;
+                if results.is_empty() {
+                    self.client.send_message("No results...").await;
+                    return;
                 }
 
-                self.client.send_message(&titles).await;
+                self.client
+                    .send_message_with_action_buttons(
+                        "Found results:",
+                        results
+                            .into_iter()
+                            .take(10)
+                            .map(|t| ActionButton {
+                                text: t.title,
+                                action: format!("add_{}", &t.topic_id[1..]),
+                            })
+                            .collect::<Vec<_>>(),
+                    )
+                    .await;
             }
             Err(error) => {
                 error!(?error, "Unable to search topics");
                 self.client
-                    .send_message("Something wrong... Check the logs.")
+                    .send_message("Something went wrong... Check the logs.")
+                    .await;
+            }
+        }
+    }
+
+    async fn handle_add_command(&self, topic_id: &str) {
+        match self.toloka.add_topic_to_bookmarks(topic_id).await {
+            Ok(()) => {
+                self.client.send_message("Bookmarked 👍").await;
+            }
+            Err(error) => {
+                error!(?error, "Unable to add topic to bookmarks");
+
+                self.client
+                    .send_message("Something went wrong... Check the logs.")
                     .await;
             }
         }

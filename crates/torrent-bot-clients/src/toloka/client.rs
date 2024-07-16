@@ -151,4 +151,34 @@ impl TolokaClient {
 
         Ok(results_meta)
     }
+
+    pub async fn add_topic_to_bookmarks(&self, topic_id: &str) -> TolokaClientResult<()> {
+        let response = self
+            .client
+            .get(format!("{}/viewtopic.php", TOLOKA_HOST))
+            .query(&json!({ "t": topic_id, "watch": "topic" }))
+            .send()
+            .await?;
+
+        if response.status() != StatusCode::OK {
+            return Err(TolokaClientError::Status(response.status()));
+        }
+
+        Ok(())
+    }
+
+    pub async fn remove_topic_from_bookmarks(&self, topic_id: &str) -> TolokaClientResult<()> {
+        let response = self
+            .client
+            .get(format!("{}/viewtopic.php", TOLOKA_HOST))
+            .query(&json!({ "t": topic_id, "unwatch": "topic" }))
+            .send()
+            .await?;
+
+        if response.status() != StatusCode::OK {
+            return Err(TolokaClientError::Status(response.status()));
+        }
+
+        Ok(())
+    }
 }

@@ -86,7 +86,7 @@ async fn main() -> std::io::Result<()> {
         }
     });
 
-    telegram_client.start_repl_v2(telegram_bot);
+    telegram_client.start_repl(telegram_bot);
 
     actix_rt::spawn({
         async move {
