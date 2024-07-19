@@ -20,7 +20,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            return context.payload.ref === "refs/heads/master"
+            return context.payload.ref === "refs/heads/main"
               ? 'latest'
               : context.payload.ref.replace(/^refs\/(tags|heads)\//, '');
 
