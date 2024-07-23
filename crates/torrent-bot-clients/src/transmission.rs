@@ -18,6 +18,8 @@ pub struct TransmissionClient {
 pub enum TransmissionClientError {
     #[error("Torrent already exists")]
     Duplicate,
+    #[error("Unknown error")]
+    Error,
     #[error("Erroneous result: {0}")]
     ErroneousResult(String),
     #[error("Missing download dir")]
@@ -83,6 +85,7 @@ impl TransmissionClient {
         match arguments {
             TorrentAddedOrDuplicate::TorrentDuplicate(_) => Err(TransmissionClientError::Duplicate),
             TorrentAddedOrDuplicate::TorrentAdded(torrent) => Ok(torrent.id.unwrap()),
+            TorrentAddedOrDuplicate::Error => Err(TransmissionClientError::Error),
         }
     }
 
