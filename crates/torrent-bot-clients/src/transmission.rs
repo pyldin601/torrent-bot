@@ -1,11 +1,18 @@
 use std::sync::Arc;
 
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
 use parking_lot::Mutex;
-use transmission_rpc::TransClient;
+use tracing::instrument;
 use transmission_rpc::types::{
     BasicAuth, Id, RpcResponse, TorrentAddArgs, TorrentAddedOrDuplicate,
 };
+use transmission_rpc::TransClient;
+
+#[derive(Debug)]
+pub enum RemoveStrategy {
+    KeepLocalData,
+    DeleteLocalData,
+}
 
 #[derive(Clone)]
 pub struct TransmissionClient {
@@ -56,6 +63,7 @@ impl TransmissionClient {
         }
     }
 
+    #[instrument(skip(self, torrent_file_content))]
     pub async fn add(
         &self,
         torrent_file_content: Vec<u8>,
@@ -104,6 +112,27 @@ impl TransmissionClient {
             .client
             .lock()
             .torrent_remove(vec![Id::Id(torrent_id)], true)
+            .await?;
+
+        Ok(())
+    }
+
+    #[instrument(skip(self))]
+    pub async fn remove(
+        &self,
+        torrent_id: i64,
+        remove_strategy: RemoveStrategy,
+    ) -> TransmissionClientResult<()> {
+        let RpcResponse { .. } = self
+            .client
+            .lock()
+            .torrent_remove(
+                vec![Id::Id(torrent_id)],
+                match remove_strategy {
+                    RemoveStrategy::KeepLocalData => false,
+                    RemoveStrategy::DeleteLocalData => true,
+                },
+            )
             .await?;
 
         Ok(())
