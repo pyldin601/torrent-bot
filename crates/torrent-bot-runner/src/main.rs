@@ -1,4 +1,5 @@
 use tracing::{error, Level};
+use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::FmtSubscriber;
 
 use torrent_bot_clients::telegram::TelegramBotClient;
@@ -24,6 +25,7 @@ async fn main() -> std::io::Result<()> {
 
     let subscriber = FmtSubscriber::builder()
         .with_max_level(Level::INFO)
+        .with_span_events(FmtSpan::FULL)
         .finish();
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");

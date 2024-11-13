@@ -63,7 +63,7 @@ impl TransmissionClient {
         }
     }
 
-    #[instrument(skip(self, torrent_file_content))]
+    #[instrument(err, skip(self, torrent_file_content))]
     pub async fn add(
         &self,
         torrent_file_content: Vec<u8>,
@@ -97,7 +97,7 @@ impl TransmissionClient {
         }
     }
 
-    #[instrument(skip(self))]
+    #[instrument(err, skip(self))]
     pub async fn remove_without_data(&self, torrent_id: i64) -> TransmissionClientResult<()> {
         let RpcResponse { .. } = self
             .client
@@ -108,7 +108,7 @@ impl TransmissionClient {
         Ok(())
     }
 
-    #[instrument(skip(self))]
+    #[instrument(err, skip(self))]
     pub async fn remove_with_data(&self, torrent_id: i64) -> TransmissionClientResult<()> {
         let RpcResponse { .. } = self
             .client
@@ -119,7 +119,7 @@ impl TransmissionClient {
         Ok(())
     }
 
-    #[instrument(skip(self))]
+    #[instrument(err, skip(self))]
     pub async fn remove(
         &self,
         torrent_id: i64,
@@ -140,7 +140,7 @@ impl TransmissionClient {
         Ok(())
     }
 
-    #[instrument(skip(self))]
+    #[instrument(err, skip(self))]
     pub async fn get_is_downloaded(&self, torrent_id: i64) -> TransmissionClientResult<bool> {
         let RpcResponse { arguments, .. } = self
             .client
