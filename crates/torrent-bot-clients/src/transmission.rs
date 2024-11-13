@@ -91,7 +91,7 @@ impl TransmissionClient {
             .await?;
 
         match arguments {
-            TorrentAddedOrDuplicate::TorrentDuplicate(_) => Err(TransmissionClientError::Duplicate),
+            TorrentAddedOrDuplicate::TorrentDuplicate(torrent) => Ok(torrent.id.unwrap()),
             TorrentAddedOrDuplicate::TorrentAdded(torrent) => Ok(torrent.id.unwrap()),
             TorrentAddedOrDuplicate::Error => Err(TransmissionClientError::Error),
         }
