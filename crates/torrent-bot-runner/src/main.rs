@@ -40,6 +40,8 @@ async fn main() -> std::io::Result<()> {
     );
     let client = Client::create(&config.server_endpoint);
 
+    // TODO Check watchlist items
+
     if let Err(error) = sync(
         toloka_client,
         transmission_client,
