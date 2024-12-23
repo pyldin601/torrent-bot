@@ -1,2 +1,3 @@
 [workspace]
+edition = "2021"
 members = ["crates/*"]
