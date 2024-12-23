@@ -21,10 +21,10 @@ pub(crate) enum SyncError {
 }
 
 pub(crate) async fn sync(
-    toloka_client: TolokaClient,
-    transmission_client: TransmissionClient,
-    task_db: TaskDb,
-    client: Client,
+    toloka_client: &TolokaClient,
+    transmission_client: &TransmissionClient,
+    task_db: &TaskDb,
+    client: &Client,
     wipeout_mode: bool,
 ) -> Result<(), SyncError> {
     debug!("Loading tasks...");
@@ -127,6 +127,16 @@ pub(crate) async fn sync(
         info!("Topic deleted: {}", task.topic_title);
     }
 
+    debug!("Done");
+
+    Ok(())
+}
+
+pub(crate) async fn check_watchlist(
+    toloka_client: &TolokaClient,
+    task_db: &TaskDb,
+    client: &Client,
+) -> Result<(), SyncError> {
     debug!("Done");
 
     Ok(())

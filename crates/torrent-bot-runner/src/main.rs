@@ -6,7 +6,7 @@ use torrent_bot_clients::transmission::TransmissionClient;
 
 use crate::client::Client;
 use crate::config::Config;
-use crate::sync_v2::sync;
+use crate::sync_v2::{check_watchlist, sync};
 use crate::task_db::TaskDb;
 
 mod client;
@@ -43,14 +43,18 @@ async fn main() -> std::io::Result<()> {
     // TODO Check watchlist items
 
     if let Err(error) = sync(
-        toloka_client,
-        transmission_client,
-        storage,
-        client,
+        &toloka_client,
+        &transmission_client,
+        &storage,
+        &client,
         config.wipeout_mode,
     )
     .await
     {
+        error!("Sync error: {:?}", error);
+    }
+
+    if let Err(error) = check_watchlist(&toloka_client, &storage, &client).await {
         error!("Sync error: {:?}", error);
     }
 
