@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 const TASKS_KEY: &str = "torrent_bot_tasks";
+const WATCHLIST_KEY: &str = "torrent_bot_watchlist";
 
 pub(crate) struct TaskDb {
     db: sled::Db,
@@ -34,6 +35,11 @@ pub(crate) struct Task {
     pub(crate) transmission_torrent_id: i64,
     #[serde(default)]
     pub(crate) task_status: TaskStatus,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub(crate) struct WatchlistItem {
+    pub(crate) query: String,
 }
 
 impl TaskDb {
@@ -90,6 +96,24 @@ impl TaskDb {
     fn save_tasks(&self, tasks: &Vec<Task>) -> StorageResult<()> {
         let vec = serde_json::to_vec(tasks).unwrap();
         let _ = self.db.insert(TASKS_KEY, vec)?;
+        Ok(())
+    }
+
+    pub(crate) fn get_watchlist_items(&self) -> StorageResult<Vec<WatchlistItem>> {
+        let raw = self.db.get(WATCHLIST_KEY)?;
+        let items = match raw {
+            Some(raw) => serde_json::from_slice(raw.as_ref()).unwrap_or_default(),
+            None => vec![],
+        };
+
+        Ok(items)
+    }
+
+    #[tracing::instrument(err, skip(self))]
+    pub(crate) fn save_watchlist_items(&self, items: &Vec<WatchlistItem>) -> StorageResult<()> {
+        let vec = serde_json::to_vec(items).unwrap();
+        let _ = self.db.insert(WATCHLIST_KEY, vec)?;
+
         Ok(())
     }
 }
