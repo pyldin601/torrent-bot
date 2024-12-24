@@ -139,5 +139,20 @@ pub(crate) async fn check_watchlist(
 ) -> Result<(), SyncError> {
     debug!("Done");
 
+    let watchlist_items = task_db.get_watchlist_items()?;
+    let mut new_watchlist_items = Vec::new();
+
+    for item in watchlist_items {
+        let results = toloka_client.get_search_results_meta(&item.query).await?;
+
+        if !results.is_empty() {
+            // TODO Send to bot
+        }
+
+        new_watchlist_items.push(item);
+    }
+
+    task_db.save_watchlist_items(&new_watchlist_items)?;
+
     Ok(())
 }
