@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use base64::{engine::general_purpose, Engine as _};
 use parking_lot::Mutex;
-use tracing::instrument;
+use tracing::{debug, instrument};
 use transmission_rpc::types::{
     BasicAuth, Id, RpcResponse, TorrentAddArgs, TorrentAddedOrDuplicate,
 };
@@ -99,22 +99,32 @@ impl TransmissionClient {
 
     #[instrument(err, skip(self))]
     pub async fn remove_without_data(&self, torrent_id: i64) -> TransmissionClientResult<()> {
-        let RpcResponse { .. } = self
+        let RpcResponse { result, arguments } = self
             .client
             .lock()
             .torrent_remove(vec![Id::Id(torrent_id)], false)
             .await?;
+
+        debug!(
+            "Result of torrent_remove call with delete_local_data = false: result = {}, arguments = {:?}",
+            result, arguments
+        );
 
         Ok(())
     }
 
     #[instrument(err, skip(self))]
     pub async fn remove_with_data(&self, torrent_id: i64) -> TransmissionClientResult<()> {
-        let RpcResponse { .. } = self
+        let RpcResponse { result, arguments } = self
             .client
             .lock()
             .torrent_remove(vec![Id::Id(torrent_id)], true)
             .await?;
+
+        debug!(
+            "Result of torrent_remove call with delete_local_data = true: result = {}, arguments = {:?}",
+            result, arguments
+        );
 
         Ok(())
     }
