@@ -3,7 +3,7 @@ name: "Build multiarch docker image"
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
     tags:
       - '**'
 
