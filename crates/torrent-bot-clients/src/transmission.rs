@@ -135,7 +135,10 @@ impl TransmissionClient {
         torrent_id: i64,
         remove_strategy: RemoveStrategy,
     ) -> TransmissionClientResult<()> {
-        let RpcResponse { .. } = self
+        let RpcResponse {
+            result,
+            arguments: _,
+        } = self
             .client
             .lock()
             .torrent_remove(
@@ -146,6 +149,8 @@ impl TransmissionClient {
                 },
             )
             .await?;
+
+        debug!(?result, "Result of torrent_remove call");
 
         Ok(())
     }
