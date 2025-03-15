@@ -13,6 +13,7 @@ mod client;
 mod config;
 mod sync_v2;
 mod task_db;
+mod task_storage;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
