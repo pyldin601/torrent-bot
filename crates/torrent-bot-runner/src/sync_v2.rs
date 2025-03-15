@@ -3,7 +3,6 @@ use std::collections::HashSet;
 use thiserror::Error;
 use tracing::{debug, info};
 
-use torrent_bot_clients::telegram::TelegramBotClient;
 use torrent_bot_clients::toloka::{TolokaClient, TolokaClientError};
 use torrent_bot_clients::transmission::{TransmissionClient, TransmissionClientError};
 
