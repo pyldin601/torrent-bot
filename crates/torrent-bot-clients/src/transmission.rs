@@ -166,7 +166,7 @@ impl TransmissionClient {
         Ok(arguments
             .torrents
             .first()
-            .map(|torrent| torrent.is_finished)
+            .filter(|torrent| torrent.is_finished.unwrap_or_default())
             .is_some())
     }
 }
