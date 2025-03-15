@@ -4,7 +4,9 @@ use thiserror::Error;
 use tracing::{debug, info};
 
 use torrent_bot_clients::toloka::{TolokaClient, TolokaClientError};
-use torrent_bot_clients::transmission::{TransmissionClient, TransmissionClientError};
+use torrent_bot_clients::transmission::{
+    RemoveStrategy, TransmissionClient, TransmissionClientError,
+};
 
 use crate::client::Client;
 use crate::task_db::{StorageError, Task, TaskDb, TaskStatus};
@@ -68,7 +70,7 @@ pub(crate) async fn sync(
                         .download(&topic.download_meta.download_id)
                         .await?;
                     transmission_client
-                        .remove_without_data(task.transmission_torrent_id)
+                        .remove(task.transmission_torrent_id, RemoveStrategy::KeepLocalData)
                         .await?;
                     let torrent_id = transmission_client
                         .add(torrent_data, &topic.topic_meta.category.to_string())
@@ -117,7 +119,10 @@ pub(crate) async fn sync(
         .filter(|t| !watched_topics_ids.contains(&t.topic_id))
     {
         transmission_client
-            .remove_with_data(task.transmission_torrent_id)
+            .remove(
+                task.transmission_torrent_id,
+                RemoveStrategy::DeleteLocalData,
+            )
             .await?;
         task_db.delete_task_by_topic_id(&task.topic_id)?;
 
