@@ -31,16 +31,6 @@ pub(crate) struct TelegramCredentials {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub(crate) struct TransmissionConfig {
-    #[serde(rename = "trans_url")]
-    pub(crate) url: String,
-    #[serde(rename = "trans_download_directory")]
-    pub(crate) username: Option<String>,
-    #[serde(default, rename = "trans_password")]
-    pub(crate) password: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
 pub(crate) struct Config {
     #[serde(default = "default_bind_address")]
     pub(crate) bind_address: String,
@@ -48,8 +38,6 @@ pub(crate) struct Config {
     pub(crate) shutdown_timeout: u64,
     #[serde(flatten)]
     pub(crate) toloka: TolokaCredentials,
-    #[serde(flatten)]
-    pub(crate) transmission: TransmissionConfig,
     #[serde(flatten)]
     pub(crate) telegram: TelegramCredentials,
 }

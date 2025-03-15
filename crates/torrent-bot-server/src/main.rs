@@ -1,13 +1,12 @@
 use actix_rt::signal::unix;
-use actix_web::{App, HttpServer, web};
 use actix_web::web::Data;
+use actix_web::{web, App, HttpServer};
 use futures_lite::FutureExt;
 use tracing::{error, info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 use torrent_bot_clients::telegram::TelegramBotClient;
 use torrent_bot_clients::toloka::TolokaClient;
-use torrent_bot_clients::transmission::TransmissionClient;
 
 use crate::config::Config;
 use crate::telegram_bot::TelegramBot;
@@ -36,13 +35,6 @@ async fn main() -> std::io::Result<()> {
     let shutdown_timeout = config.shutdown_timeout.clone();
     let bind_address = config.bind_address.clone();
 
-    let transmission_client = TransmissionClient::create(
-        config.transmission.url,
-        config.transmission.username,
-        config.transmission.password,
-        None,
-        false,
-    );
     let toloka_client = TolokaClient::create(&config.toloka.username, &config.toloka.password)
         .await
         .expect("Unable to initialize toloka client");
@@ -56,7 +48,6 @@ async fn main() -> std::io::Result<()> {
 
         move || {
             App::new()
-                .app_data(Data::new(Clone::clone(&transmission_client)))
                 .app_data(Data::new(Clone::clone(&telegram_client)))
                 .service(
                     web::resource("/internal/telegram-bot/send-message")
