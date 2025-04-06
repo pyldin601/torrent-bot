@@ -425,9 +425,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.38"
+version = "0.4.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a21f936df1771bf62b77f047b726c4625ff2e8aa607c01ec06e5a05bd8463401"
+checksum = "1a7964611d71df112cb1730f2ee67324fcf4d0fc6606acbbe9bfe06df124637c"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
@@ -435,7 +435,7 @@ dependencies = [
  "num-traits",
  "serde",
  "wasm-bindgen",
- "windows-targets 0.52.5",
+ "windows-link",
 ]
 
 [[package]]
@@ -1360,9 +1360,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.21"
+version = "0.4.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
+checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 
 [[package]]
 name = "mac"
@@ -2921,15 +2921,17 @@ dependencies = [
 
 [[package]]
 name = "transmission-rpc"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "975758b6dd51b367e4454e9d4ae9b61a5419c6454822ffe1ab92c29bd6196a58"
+checksum = "05204060bd751037cbbfe488e22d4a47991aa583052e85adbf4e96ab834a41bf"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "enum-iterator",
  "log",
  "reqwest 0.12.15",
  "serde",
+ "serde_json",
  "serde_repr",
 ]
 
