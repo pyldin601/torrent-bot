@@ -11,6 +11,7 @@ use crate::task_db::TaskDb;
 
 mod client;
 mod config;
+mod sync_extensions;
 mod sync_v2;
 mod task_db;
 

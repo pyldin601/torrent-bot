@@ -19,28 +19,6 @@ pub(crate) enum SyncError {
     TransmissionError(#[from] transmission::TransmissionClientError),
 }
 
-impl Into<crate::task_db::TorrentId> for &transmission::TorrentId {
-    fn into(self) -> crate::task_db::TorrentId {
-        match self {
-            transmission::TorrentId::Id(id) => crate::task_db::TorrentId::Id(*id),
-            transmission::TorrentId::Hash(hash) => {
-                crate::task_db::TorrentId::Hash(hash.to_string())
-            }
-        }
-    }
-}
-
-impl Into<transmission::TorrentId> for &crate::task_db::TorrentId {
-    fn into(self) -> transmission::TorrentId {
-        match self {
-            crate::task_db::TorrentId::Id(id) => transmission::TorrentId::Id(*id),
-            crate::task_db::TorrentId::Hash(hash) => {
-                transmission::TorrentId::Hash(hash.to_string())
-            }
-        }
-    }
-}
-
 pub(crate) async fn sync(
     toloka_client: toloka::TolokaClient,
     transmission_client: transmission::TransmissionClient,
