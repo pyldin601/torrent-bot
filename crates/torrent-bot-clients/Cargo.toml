@@ -5,7 +5,7 @@ authors = ["Roman Lakhtadyr <roman.lakhtadyr@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-transmission-rpc = "0.4.2"
+transmission-rpc = "0.5.0"
 reqwest = { version = "0.12.5", features = ["cookies"] }
 actix-rt = "2.10.0"
 thiserror = "1.0.30"
