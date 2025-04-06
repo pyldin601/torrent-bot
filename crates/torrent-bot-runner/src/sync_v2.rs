@@ -72,9 +72,9 @@ pub(crate) async fn sync(
                     debug!("Topic unchanged: {}", topic.topic_meta.title);
 
                     if matches!(task.task_status, TaskStatus::Added) {
-                        let is_downloaded = transmission_client
-                            .get_is_downloaded(&(&task.transmission_torrent_id).into())
-                            .await?;
+                        let torrent_id = (&task.transmission_torrent_id).into();
+                        let is_downloaded =
+                            transmission_client.get_is_downloaded(&torrent_id).await?;
 
                         if is_downloaded {
                             task_db.mark_task_as_finished_by_topic_id(&task.topic_id)?;
@@ -89,11 +89,9 @@ pub(crate) async fn sync(
                     let torrent_data = toloka_client
                         .download(&topic.download_meta.download_id)
                         .await?;
+                    let torrent_id = (&task.transmission_torrent_id).into();
                     transmission_client
-                        .remove(
-                            &(&task.transmission_torrent_id).into(),
-                            transmission::RemoveStrategy::KeepLocalData,
-                        )
+                        .remove(&torrent_id, transmission::RemoveStrategy::KeepLocalData)
                         .await?;
                     let torrent_id = transmission_client
                         .add(torrent_data, &topic.topic_meta.category.to_string())
@@ -141,11 +139,9 @@ pub(crate) async fn sync(
         .iter()
         .filter(|t| !watched_topics_ids.contains(&t.topic_id))
     {
+        let torrent_id = (&task.transmission_torrent_id).into();
         transmission_client
-            .remove(
-                &(&task.transmission_torrent_id).into(),
-                transmission::RemoveStrategy::DeleteLocalData,
-            )
+            .remove(&torrent_id, transmission::RemoveStrategy::DeleteLocalData)
             .await?;
         task_db.delete_task_by_topic_id(&task.topic_id)?;
 
