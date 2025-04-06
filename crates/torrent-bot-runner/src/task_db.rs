@@ -20,6 +20,13 @@ pub(crate) enum TaskStatus {
     Finished,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub(crate) enum TorrentId {
+    Id(i64),
+    Hash(String),
+}
+
 impl Default for TaskStatus {
     fn default() -> Self {
         Self::Added
@@ -31,7 +38,7 @@ pub(crate) struct Task {
     pub(crate) topic_id: String,
     pub(crate) topic_title: String,
     pub(crate) topic_download_registered_at: String,
-    pub(crate) transmission_torrent_id: i64,
+    pub(crate) transmission_torrent_id: TorrentId,
     #[serde(default)]
     pub(crate) task_status: TaskStatus,
 }

@@ -4,7 +4,7 @@ use base64::{engine::general_purpose, Engine as _};
 use parking_lot::Mutex;
 use tracing::{debug, instrument};
 use transmission_rpc::types::{
-    BasicAuth, Id, RpcResponse, TorrentAddArgs, TorrentAddedOrDuplicate,
+    BasicAuth, Id, RpcResponse, Torrent, TorrentAddArgs, TorrentAddedOrDuplicate,
 };
 use transmission_rpc::TransClient;
 
@@ -12,6 +12,31 @@ use transmission_rpc::TransClient;
 pub enum RemoveStrategy {
     KeepLocalData,
     DeleteLocalData,
+}
+
+#[derive(Debug)]
+pub enum TorrentId {
+    Id(i64),
+    Hash(String),
+}
+
+impl From<&TorrentId> for Id {
+    fn from(value: &TorrentId) -> Self {
+        match value {
+            TorrentId::Id(id) => Id::Id(*id),
+            TorrentId::Hash(hash) => Id::Hash(hash.clone()),
+        }
+    }
+}
+
+impl TryInto<TorrentId> for Torrent {
+    type Error = TransmissionClientError;
+
+    fn try_into(self) -> Result<TorrentId, Self::Error> {
+        self.hash_string
+            .map(TorrentId::Hash)
+            .ok_or(TransmissionClientError::MissingHashString)
+    }
 }
 
 #[derive(Clone)]
@@ -33,6 +58,8 @@ pub enum TransmissionClientError {
     MissingDownloadDir,
     #[error("Unable to perform RPC request on transmission server: {0}")]
     TransmissionError(#[from] Box<dyn std::error::Error + Send + Sync>),
+    #[error("Missing torrent hash")]
+    MissingHashString,
 }
 
 pub type TransmissionClientResult<T> = Result<T, TransmissionClientError>;
@@ -68,7 +95,7 @@ impl TransmissionClient {
         &self,
         torrent_file_content: Vec<u8>,
         path: &str,
-    ) -> TransmissionClientResult<i64> {
+    ) -> TransmissionClientResult<TorrentId> {
         let metainfo = general_purpose::STANDARD.encode(torrent_file_content);
         let dry_run = self.dry_run;
         let download_dir = self
@@ -91,8 +118,8 @@ impl TransmissionClient {
             .await?;
 
         match arguments {
-            TorrentAddedOrDuplicate::TorrentDuplicate(torrent) => Ok(torrent.id.unwrap()),
-            TorrentAddedOrDuplicate::TorrentAdded(torrent) => Ok(torrent.id.unwrap()),
+            TorrentAddedOrDuplicate::TorrentDuplicate(torrent) => torrent.try_into(),
+            TorrentAddedOrDuplicate::TorrentAdded(torrent) => torrent.try_into(),
             TorrentAddedOrDuplicate::Error => Err(TransmissionClientError::Error),
         }
     }
@@ -100,7 +127,7 @@ impl TransmissionClient {
     #[instrument(err, skip(self))]
     pub async fn remove(
         &self,
-        torrent_id: i64,
+        torrent_id: &TorrentId,
         remove_strategy: RemoveStrategy,
     ) -> TransmissionClientResult<()> {
         let RpcResponse {
@@ -110,7 +137,7 @@ impl TransmissionClient {
             .client
             .lock()
             .torrent_remove(
-                vec![Id::Id(torrent_id)],
+                vec![torrent_id.into()],
                 match remove_strategy {
                     RemoveStrategy::KeepLocalData => false,
                     RemoveStrategy::DeleteLocalData => true,
@@ -124,11 +151,14 @@ impl TransmissionClient {
     }
 
     #[instrument(err, skip(self))]
-    pub async fn get_is_downloaded(&self, torrent_id: i64) -> TransmissionClientResult<bool> {
+    pub async fn get_is_downloaded(
+        &self,
+        torrent_id: &TorrentId,
+    ) -> TransmissionClientResult<bool> {
         let RpcResponse { arguments, .. } = self
             .client
             .lock()
-            .torrent_get(None, Some(vec![Id::Id(torrent_id)]))
+            .torrent_get(None, Some(vec![torrent_id.into()]))
             .await?;
 
         Ok(arguments

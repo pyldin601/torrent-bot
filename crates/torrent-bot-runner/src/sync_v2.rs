@@ -3,10 +3,8 @@ use std::collections::HashSet;
 use thiserror::Error;
 use tracing::{debug, info};
 
-use torrent_bot_clients::toloka::{TolokaClient, TolokaClientError};
-use torrent_bot_clients::transmission::{
-    RemoveStrategy, TransmissionClient, TransmissionClientError,
-};
+use torrent_bot_clients::toloka;
+use torrent_bot_clients::transmission;
 
 use crate::client::Client;
 use crate::task_db::{StorageError, Task, TaskDb, TaskStatus};
@@ -14,16 +12,38 @@ use crate::task_db::{StorageError, Task, TaskDb, TaskStatus};
 #[derive(Debug, Error)]
 pub(crate) enum SyncError {
     #[error("Error happened in toloka client: {0}")]
-    TolokaClientError(#[from] TolokaClientError),
+    TolokaClientError(#[from] toloka::TolokaClientError),
     #[error("Error happened in storage: {0}")]
     StorageError(#[from] StorageError),
     #[error("Error happened in transmission client: {0}")]
-    TransmissionError(#[from] TransmissionClientError),
+    TransmissionError(#[from] transmission::TransmissionClientError),
+}
+
+impl Into<crate::task_db::TorrentId> for &transmission::TorrentId {
+    fn into(self) -> crate::task_db::TorrentId {
+        match self {
+            transmission::TorrentId::Id(id) => crate::task_db::TorrentId::Id(*id),
+            transmission::TorrentId::Hash(hash) => {
+                crate::task_db::TorrentId::Hash(hash.to_string())
+            }
+        }
+    }
+}
+
+impl Into<transmission::TorrentId> for &crate::task_db::TorrentId {
+    fn into(self) -> transmission::TorrentId {
+        match self {
+            crate::task_db::TorrentId::Id(id) => transmission::TorrentId::Id(*id),
+            crate::task_db::TorrentId::Hash(hash) => {
+                transmission::TorrentId::Hash(hash.to_string())
+            }
+        }
+    }
 }
 
 pub(crate) async fn sync(
-    toloka_client: TolokaClient,
-    transmission_client: TransmissionClient,
+    toloka_client: toloka::TolokaClient,
+    transmission_client: transmission::TransmissionClient,
     task_db: TaskDb,
     client: Client,
     wipeout_mode: bool,
@@ -52,9 +72,9 @@ pub(crate) async fn sync(
                     debug!("Topic unchanged: {}", topic.topic_meta.title);
 
                     if matches!(task.task_status, TaskStatus::Added) {
-                        let is_downloaded = transmission_client
-                            .get_is_downloaded(task.transmission_torrent_id)
-                            .await?;
+                        let torrent_id = (&task.transmission_torrent_id).into();
+                        let is_downloaded =
+                            transmission_client.get_is_downloaded(&torrent_id).await?;
 
                         if is_downloaded {
                             task_db.mark_task_as_finished_by_topic_id(&task.topic_id)?;
@@ -69,8 +89,9 @@ pub(crate) async fn sync(
                     let torrent_data = toloka_client
                         .download(&topic.download_meta.download_id)
                         .await?;
+                    let torrent_id = (&task.transmission_torrent_id).into();
                     transmission_client
-                        .remove(task.transmission_torrent_id, RemoveStrategy::KeepLocalData)
+                        .remove(&torrent_id, transmission::RemoveStrategy::KeepLocalData)
                         .await?;
                     let torrent_id = transmission_client
                         .add(torrent_data, &topic.topic_meta.category.to_string())
@@ -81,7 +102,7 @@ pub(crate) async fn sync(
                         topic_id: topic.topic_meta.topic_id,
                         topic_title: topic.topic_meta.title.clone(),
                         topic_download_registered_at: topic.download_meta.registered_at,
-                        transmission_torrent_id: torrent_id,
+                        transmission_torrent_id: (&torrent_id).into(),
                         task_status: TaskStatus::Added,
                     })?;
 
@@ -101,7 +122,7 @@ pub(crate) async fn sync(
                         topic_id: topic.topic_meta.topic_id,
                         topic_title: topic.topic_meta.title.clone(),
                         topic_download_registered_at: topic.download_meta.registered_at,
-                        transmission_torrent_id: torrent_id,
+                        transmission_torrent_id: (&torrent_id).into(),
                         task_status: TaskStatus::Added,
                     })?;
 
@@ -118,11 +139,9 @@ pub(crate) async fn sync(
         .iter()
         .filter(|t| !watched_topics_ids.contains(&t.topic_id))
     {
+        let torrent_id = (&task.transmission_torrent_id).into();
         transmission_client
-            .remove(
-                task.transmission_torrent_id,
-                RemoveStrategy::DeleteLocalData,
-            )
+            .remove(&torrent_id, transmission::RemoveStrategy::DeleteLocalData)
             .await?;
         task_db.delete_task_by_topic_id(&task.topic_id)?;
 
