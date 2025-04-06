@@ -3,9 +3,7 @@ use std::sync::Arc;
 use base64::{engine::general_purpose, Engine as _};
 use parking_lot::Mutex;
 use tracing::{debug, instrument};
-use transmission_rpc::types::{
-    BasicAuth, Id, RpcResponse, Torrent, TorrentAddArgs, TorrentAddedOrDuplicate,
-};
+use transmission_rpc::types::{BasicAuth, RpcResponse, TorrentAddArgs, TorrentAddedOrDuplicate};
 use transmission_rpc::TransClient;
 
 #[derive(Debug)]
@@ -18,25 +16,6 @@ pub enum RemoveStrategy {
 pub enum TorrentId {
     Id(i64),
     Hash(String),
-}
-
-impl From<&TorrentId> for Id {
-    fn from(value: &TorrentId) -> Self {
-        match value {
-            TorrentId::Id(id) => Id::Id(*id),
-            TorrentId::Hash(hash) => Id::Hash(hash.clone()),
-        }
-    }
-}
-
-impl TryInto<TorrentId> for Torrent {
-    type Error = TransmissionClientError;
-
-    fn try_into(self) -> Result<TorrentId, Self::Error> {
-        self.hash_string
-            .map(TorrentId::Hash)
-            .ok_or(TransmissionClientError::MissingHashString)
-    }
 }
 
 #[derive(Clone)]
