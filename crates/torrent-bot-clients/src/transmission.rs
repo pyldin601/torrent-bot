@@ -20,11 +20,11 @@ pub enum TorrentId {
     Hash(String),
 }
 
-impl From<TorrentId> for Id {
-    fn from(value: TorrentId) -> Self {
+impl From<&TorrentId> for Id {
+    fn from(value: &TorrentId) -> Self {
         match value {
-            TorrentId::Id(id) => Id::Id(id),
-            TorrentId::Hash(hash) => Id::Hash(hash),
+            TorrentId::Id(id) => Id::Id(*id),
+            TorrentId::Hash(hash) => Id::Hash(hash.clone()),
         }
     }
 }
@@ -128,7 +128,7 @@ impl TransmissionClient {
     #[instrument(err, skip(self))]
     pub async fn remove(
         &self,
-        torrent_id: TorrentId,
+        torrent_id: &TorrentId,
         remove_strategy: RemoveStrategy,
     ) -> TransmissionClientResult<()> {
         let RpcResponse {
@@ -152,7 +152,10 @@ impl TransmissionClient {
     }
 
     #[instrument(err, skip(self))]
-    pub async fn get_is_downloaded(&self, torrent_id: TorrentId) -> TransmissionClientResult<bool> {
+    pub async fn get_is_downloaded(
+        &self,
+        torrent_id: &TorrentId,
+    ) -> TransmissionClientResult<bool> {
         let RpcResponse { arguments, .. } = self
             .client
             .lock()
