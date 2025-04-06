@@ -33,10 +33,9 @@ impl TryInto<TorrentId> for Torrent {
     type Error = TransmissionClientError;
 
     fn try_into(self) -> Result<TorrentId, Self::Error> {
-        Ok(TorrentId::Hash(
-            self.hash_string
-                .ok_or(TransmissionClientError::MissingHashString)?,
-        ))
+        self.hash_string
+            .map(TorrentId::Hash)
+            .ok_or(TransmissionClientError::MissingHashString)
     }
 }
 
