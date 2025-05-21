@@ -1,4 +1,4 @@
-FROM rust:1.86.0
+FROM rust:1.87.0
 
 WORKDIR /code
 
@@ -12,7 +12,7 @@ RUN \
     mv target/*/torrent-bot-server torrent-bot-server && \
     rm -rf target
 
-FROM rust:1.86.0
+FROM rust:1.87.0
 
 COPY --from=0 /code/torrent-bot-server /torrent-bot-server
 
