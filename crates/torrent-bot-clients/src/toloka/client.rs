@@ -1,5 +1,5 @@
-use reqwest::{Client, StatusCode};
 use reqwest::redirect::Policy;
+use reqwest::{Client, StatusCode};
 use serde::Serialize;
 use serde_json::json;
 use tracing::warn;
@@ -129,6 +129,8 @@ impl TolokaClient {
                     warn!(?topic_meta.topic_id, "Missing download meta. Skipping...")
                 }
             }
+
+            let _ = actix_rt::time::sleep(std::time::Duration::from_secs(5)).await;
         }
 
         Ok(topics)
