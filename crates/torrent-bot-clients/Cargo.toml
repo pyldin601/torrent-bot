@@ -15,5 +15,5 @@ scraper = "0.23.0"
 base64 = "0.22.1"
 tracing = "0.1.40"
 parking_lot = "0.12.3"
-teloxide = { version = "0.15", features = ["macros"] }
+teloxide = { version = "0.17", features = ["macros"] }
 async-trait = "0.1.81"
