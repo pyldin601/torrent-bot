@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use thiserror::Error;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 use torrent_bot_clients::toloka;
 use torrent_bot_clients::transmission;
@@ -17,6 +17,8 @@ pub(crate) enum SyncError {
     StorageError(#[from] StorageError),
     #[error("Error happened in transmission client: {0}")]
     TransmissionError(#[from] transmission::TransmissionClientError),
+    #[error("Toloka returned no watched topics while {0} tasks exist; refusing to delete them")]
+    EmptyWatchedTopics(usize),
 }
 
 pub(crate) async fn sync(
@@ -36,16 +38,27 @@ pub(crate) async fn sync(
         .map(|t| t.topic_meta.topic_id.clone())
         .collect::<HashSet<_>>();
 
+    // An empty list almost always means we got a login or Cloudflare page instead of the real
+    // one. Deleting every task (and its local data) based on that would be destructive.
+    if watched_topics.is_empty() && !tasks.is_empty() {
+        return Err(SyncError::EmptyWatchedTopics(tasks.len()));
+    }
+
     if !wipeout_mode {
         debug!("Syncing present topics...");
         for topic in watched_topics.into_iter() {
+            let Some(download_meta) = topic.download_meta else {
+                warn!("Skipping topic without download meta: {}", topic.topic_meta.title);
+                continue;
+            };
+
             let matched_task = tasks
                 .iter()
                 .find(|t| t.topic_id == topic.topic_meta.topic_id);
 
             match matched_task {
                 Some(task)
-                    if task.topic_download_registered_at == topic.download_meta.registered_at =>
+                    if task.topic_download_registered_at == download_meta.registered_at =>
                 {
                     debug!("Topic unchanged: {}", topic.topic_meta.title);
 
@@ -65,7 +78,7 @@ pub(crate) async fn sync(
                 }
                 Some(task) => {
                     let torrent_data = toloka_client
-                        .download(&topic.download_meta.download_id)
+                        .download(&download_meta.download_id)
                         .await?;
                     let torrent_id = (&task.transmission_torrent_id).into();
                     transmission_client
@@ -79,7 +92,7 @@ pub(crate) async fn sync(
                     task_db.add_task(Task {
                         topic_id: topic.topic_meta.topic_id,
                         topic_title: topic.topic_meta.title.clone(),
-                        topic_download_registered_at: topic.download_meta.registered_at,
+                        topic_download_registered_at: download_meta.registered_at,
                         transmission_torrent_id: (&torrent_id).into(),
                         task_status: TaskStatus::Added,
                     })?;
@@ -90,7 +103,7 @@ pub(crate) async fn sync(
                 }
                 None => {
                     let torrent_data = toloka_client
-                        .download(&topic.download_meta.download_id)
+                        .download(&download_meta.download_id)
                         .await?;
                     let torrent_id = transmission_client
                         .add(torrent_data, &topic.topic_meta.category.to_string())
@@ -99,7 +112,7 @@ pub(crate) async fn sync(
                     task_db.add_task(Task {
                         topic_id: topic.topic_meta.topic_id,
                         topic_title: topic.topic_meta.title.clone(),
-                        topic_download_registered_at: topic.download_meta.registered_at,
+                        topic_download_registered_at: download_meta.registered_at,
                         transmission_torrent_id: (&torrent_id).into(),
                         task_status: TaskStatus::Added,
                     })?;

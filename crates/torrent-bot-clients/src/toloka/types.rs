@@ -31,5 +31,7 @@ pub struct DownloadMeta {
 
 pub struct Topic {
     pub topic_meta: TopicMeta,
-    pub download_meta: DownloadMeta,
+    /// `None` when the topic page could not be parsed. The topic is still watched,
+    /// so callers must not treat it as removed.
+    pub download_meta: Option<DownloadMeta>,
 }

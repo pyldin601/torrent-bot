@@ -123,17 +123,14 @@ impl TolokaClient {
         let mut topics = vec![];
 
         for topic_meta in topics_meta.into_iter() {
-            match self.get_download_meta(&topic_meta.topic_id).await? {
-                Some(download_meta) => {
-                    topics.push(Topic {
-                        topic_meta,
-                        download_meta,
-                    });
-                }
-                None => {
-                    warn!(?topic_meta.topic_id, "Missing download meta. Skipping...")
-                }
+            let download_meta = self.get_download_meta(&topic_meta.topic_id).await?;
+            if download_meta.is_none() {
+                warn!(?topic_meta.topic_id, "Missing download meta");
             }
+            topics.push(Topic {
+                topic_meta,
+                download_meta,
+            });
 
             let _ = actix_rt::time::sleep(std::time::Duration::from_secs(5)).await;
         }
