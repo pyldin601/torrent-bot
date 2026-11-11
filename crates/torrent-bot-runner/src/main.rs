@@ -51,6 +51,8 @@ async fn main() -> std::io::Result<()> {
     .await
     {
         error!("Sync error: {:?}", error);
+        // Exit non-zero so the Kubernetes Job is marked as failed instead of Completed.
+        std::process::exit(1);
     }
 
     Ok(())

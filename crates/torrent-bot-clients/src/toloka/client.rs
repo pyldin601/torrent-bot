@@ -40,6 +40,11 @@ impl TolokaClient {
         let client = Client::builder()
             .redirect(Policy::none())
             .cookie_store(true)
+            // toloka.to (behind Cloudflare) drops keep-alive connections after ~5s idle.
+            // We pause 5s between topic requests, so reusing a pooled connection races the
+            // server-side close and fails with "Connection reset by peer". Never reuse a
+            // connection that has been idle that long.
+            .pool_idle_timeout(std::time::Duration::from_secs(2))
             .build()
             .expect("Failed to create HTTP Client");
 
