@@ -5,7 +5,7 @@ use teloxide::dispatching::dialogue::GetChatId;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup};
 use teloxide::utils::command::BotCommands;
-use tracing::{error, warn};
+use tracing::{error, instrument, warn};
 
 use crate::telegram::BotCommandHandler;
 
@@ -104,12 +104,14 @@ impl TelegramBotClient {
         });
     }
 
+    #[instrument(name = "telegram.send_message", skip_all, fields(otel.kind = "client"))]
     pub async fn send_message(&self, text: &str) {
         if let Err(error) = self.bot.send_message(self.chat_id, text).await {
             error!(?error, "Failed to send message to telegram bot");
         }
     }
 
+    #[instrument(name = "telegram.send_message", skip_all, fields(otel.kind = "client", buttons = buttons.len()))]
     pub async fn send_message_with_action_buttons(&self, text: &str, buttons: Vec<ActionButton>) {
         let markup = InlineKeyboardMarkup::new(
             buttons

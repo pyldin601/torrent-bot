@@ -1,4 +1,4 @@
-use tracing::error;
+use tracing::{error, instrument};
 
 use torrent_bot_clients::telegram::{ActionButton, BotCommandHandler, TelegramBotClient};
 use torrent_bot_clients::toloka::TolokaClient;
@@ -16,6 +16,7 @@ impl TelegramBot {
 
 #[async_trait::async_trait]
 impl BotCommandHandler<'_> for TelegramBot {
+    #[instrument(name = "telegram.search_command", skip(self), fields(otel.kind = "consumer"))]
     async fn handle_search_command(&self, query: &str) {
         match self.toloka.get_search_results_meta(&query).await {
             Ok(results) => {
@@ -47,6 +48,7 @@ impl BotCommandHandler<'_> for TelegramBot {
         }
     }
 
+    #[instrument(name = "telegram.add_command", skip(self), fields(otel.kind = "consumer"))]
     async fn handle_add_command(&self, topic_id: &str) {
         match self.toloka.add_topic_to_bookmarks(topic_id).await {
             Ok(()) => {

@@ -3,9 +3,10 @@ use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
 use futures_lite::FutureExt;
 use tracing::{error, info, Level};
-use tracing_subscriber::FmtSubscriber;
+use tracing_actix_web::TracingLogger;
 
 use torrent_bot_clients::telegram::TelegramBotClient;
+use torrent_bot_clients::telemetry;
 use torrent_bot_clients::toloka::TolokaClient;
 
 use crate::config::Config;
@@ -23,11 +24,7 @@ async fn main() -> std::io::Result<()> {
         Config::from_env()
     };
 
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
-        .finish();
-
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+    let mut telemetry = telemetry::init("torrent-bot-server", Level::INFO);
 
     let mut terminate = unix::signal(unix::SignalKind::terminate())?;
     let mut interrupt = unix::signal(unix::SignalKind::interrupt())?;
@@ -48,6 +45,8 @@ async fn main() -> std::io::Result<()> {
 
         move || {
             App::new()
+                // One span per request; joins the caller's trace via the `traceparent` header.
+                .wrap(TracingLogger::default())
                 .app_data(Data::new(Clone::clone(&telegram_client)))
                 .service(
                     web::resource("/internal/telegram-bot/send-message")
@@ -106,6 +105,7 @@ async fn main() -> std::io::Result<()> {
     // TODO Forceful shutdown
 
     server_handle.stop(true).await;
+    telemetry.shutdown();
 
     Ok(())
 }

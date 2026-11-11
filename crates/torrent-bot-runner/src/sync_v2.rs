@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use thiserror::Error;
-use tracing::{debug, info, warn};
+use tracing::{debug, info, info_span, instrument, warn, Instrument};
 
 use torrent_bot_clients::toloka;
 use torrent_bot_clients::transmission;
@@ -21,6 +21,7 @@ pub(crate) enum SyncError {
     EmptyWatchedTopics(usize),
 }
 
+#[instrument(name = "sync", skip_all, err, fields(wipeout_mode))]
 pub(crate) async fn sync(
     toloka_client: toloka::TolokaClient,
     transmission_client: transmission::TransmissionClient,
@@ -48,7 +49,10 @@ pub(crate) async fn sync(
         debug!("Syncing present topics...");
         for topic in watched_topics.into_iter() {
             let Some(download_meta) = topic.download_meta else {
-                warn!("Skipping topic without download meta: {}", topic.topic_meta.title);
+                warn!(
+                    "Skipping topic without download meta: {}",
+                    topic.topic_meta.title
+                );
                 continue;
             };
 
@@ -56,72 +60,82 @@ pub(crate) async fn sync(
                 .iter()
                 .find(|t| t.topic_id == topic.topic_meta.topic_id);
 
-            match matched_task {
-                Some(task)
-                    if task.topic_download_registered_at == download_meta.registered_at =>
-                {
-                    debug!("Topic unchanged: {}", topic.topic_meta.title);
+            let span = info_span!(
+                "sync_topic",
+                topic_id = %topic.topic_meta.topic_id,
+                title = %topic.topic_meta.title,
+            );
 
-                    if matches!(task.task_status, TaskStatus::Added) {
-                        let torrent_id = (&task.transmission_torrent_id).into();
-                        let is_downloaded =
-                            transmission_client.get_is_downloaded(&torrent_id).await?;
+            async {
+                match matched_task {
+                    Some(task)
+                        if task.topic_download_registered_at == download_meta.registered_at =>
+                    {
+                        debug!("Topic unchanged: {}", topic.topic_meta.title);
 
-                        if is_downloaded {
-                            task_db.mark_task_as_finished_by_topic_id(&task.topic_id)?;
+                        if matches!(task.task_status, TaskStatus::Added) {
+                            let torrent_id = (&task.transmission_torrent_id).into();
+                            let is_downloaded =
+                                transmission_client.get_is_downloaded(&torrent_id).await?;
 
-                            client.send_torrent_downloaded(&task.topic_title).await;
+                            if is_downloaded {
+                                task_db.mark_task_as_finished_by_topic_id(&task.topic_id)?;
 
-                            info!("Torrent downloaded: {}", topic.topic_meta.title);
+                                client.send_torrent_downloaded(&task.topic_title).await;
+
+                                info!("Torrent downloaded: {}", topic.topic_meta.title);
+                            }
                         }
                     }
+                    Some(task) => {
+                        let torrent_data =
+                            toloka_client.download(&download_meta.download_id).await?;
+                        let torrent_id = (&task.transmission_torrent_id).into();
+                        transmission_client
+                            .remove(&torrent_id, transmission::RemoveStrategy::KeepLocalData)
+                            .await?;
+                        let torrent_id = transmission_client
+                            .add(torrent_data, &topic.topic_meta.category.to_string())
+                            .await?;
+
+                        task_db.delete_task_by_topic_id(&topic.topic_meta.topic_id)?;
+                        task_db.add_task(Task {
+                            topic_id: topic.topic_meta.topic_id,
+                            topic_title: topic.topic_meta.title.clone(),
+                            topic_download_registered_at: download_meta.registered_at,
+                            transmission_torrent_id: (&torrent_id).into(),
+                            task_status: TaskStatus::Added,
+                        })?;
+
+                        client.send_topic_updated(&topic.topic_meta.title).await;
+
+                        info!("Topic updated: {}", topic.topic_meta.title);
+                    }
+                    None => {
+                        let torrent_data =
+                            toloka_client.download(&download_meta.download_id).await?;
+                        let torrent_id = transmission_client
+                            .add(torrent_data, &topic.topic_meta.category.to_string())
+                            .await?;
+
+                        task_db.add_task(Task {
+                            topic_id: topic.topic_meta.topic_id,
+                            topic_title: topic.topic_meta.title.clone(),
+                            topic_download_registered_at: download_meta.registered_at,
+                            transmission_torrent_id: (&torrent_id).into(),
+                            task_status: TaskStatus::Added,
+                        })?;
+
+                        client.send_topic_added(&topic.topic_meta.title).await;
+
+                        info!("Topic added: {}", topic.topic_meta.title);
+                    }
                 }
-                Some(task) => {
-                    let torrent_data = toloka_client
-                        .download(&download_meta.download_id)
-                        .await?;
-                    let torrent_id = (&task.transmission_torrent_id).into();
-                    transmission_client
-                        .remove(&torrent_id, transmission::RemoveStrategy::KeepLocalData)
-                        .await?;
-                    let torrent_id = transmission_client
-                        .add(torrent_data, &topic.topic_meta.category.to_string())
-                        .await?;
 
-                    task_db.delete_task_by_topic_id(&topic.topic_meta.topic_id)?;
-                    task_db.add_task(Task {
-                        topic_id: topic.topic_meta.topic_id,
-                        topic_title: topic.topic_meta.title.clone(),
-                        topic_download_registered_at: download_meta.registered_at,
-                        transmission_torrent_id: (&torrent_id).into(),
-                        task_status: TaskStatus::Added,
-                    })?;
-
-                    client.send_topic_updated(&topic.topic_meta.title).await;
-
-                    info!("Topic updated: {}", topic.topic_meta.title);
-                }
-                None => {
-                    let torrent_data = toloka_client
-                        .download(&download_meta.download_id)
-                        .await?;
-                    let torrent_id = transmission_client
-                        .add(torrent_data, &topic.topic_meta.category.to_string())
-                        .await?;
-
-                    task_db.add_task(Task {
-                        topic_id: topic.topic_meta.topic_id,
-                        topic_title: topic.topic_meta.title.clone(),
-                        topic_download_registered_at: download_meta.registered_at,
-                        transmission_torrent_id: (&torrent_id).into(),
-                        task_status: TaskStatus::Added,
-                    })?;
-
-                    client.send_topic_added(&topic.topic_meta.title).await;
-
-                    info!("Topic added: {}", topic.topic_meta.title);
-                }
+                Ok::<(), SyncError>(())
             }
+            .instrument(span)
+            .await?;
         }
     }
 
@@ -130,15 +144,27 @@ pub(crate) async fn sync(
         .iter()
         .filter(|t| !watched_topics_ids.contains(&t.topic_id))
     {
-        let torrent_id = (&task.transmission_torrent_id).into();
-        transmission_client
-            .remove(&torrent_id, transmission::RemoveStrategy::DeleteLocalData)
-            .await?;
-        task_db.delete_task_by_topic_id(&task.topic_id)?;
+        let span = info_span!(
+            "delete_topic",
+            topic_id = %task.topic_id,
+            title = %task.topic_title,
+        );
 
-        client.send_topic_deleted(&task.topic_title).await;
+        async {
+            let torrent_id = (&task.transmission_torrent_id).into();
+            transmission_client
+                .remove(&torrent_id, transmission::RemoveStrategy::DeleteLocalData)
+                .await?;
+            task_db.delete_task_by_topic_id(&task.topic_id)?;
 
-        info!("Topic deleted: {}", task.topic_title);
+            client.send_topic_deleted(&task.topic_title).await;
+
+            info!("Topic deleted: {}", task.topic_title);
+
+            Ok::<(), SyncError>(())
+        }
+        .instrument(span)
+        .await?;
     }
 
     debug!("Done");

@@ -2,7 +2,7 @@ use reqwest::redirect::Policy;
 use reqwest::{Client, StatusCode};
 use serde::Serialize;
 use serde_json::json;
-use tracing::warn;
+use tracing::{instrument, warn, Span};
 
 use crate::toloka::types::{DownloadMeta, Topic, TopicMeta};
 
@@ -36,6 +36,8 @@ pub enum TolokaClientError {
 pub type TolokaClientResult<T> = Result<T, TolokaClientError>;
 
 impl TolokaClient {
+    // skip_all: the arguments include the Toloka password.
+    #[instrument(name = "toloka.login", skip_all, err, fields(otel.kind = "client"))]
     pub async fn create(username: &str, password: &str) -> TolokaClientResult<TolokaClient> {
         let client = Client::builder()
             .redirect(Policy::none())
@@ -70,6 +72,7 @@ impl TolokaClient {
         Ok(Self { client })
     }
 
+    #[instrument(name = "toloka.download", skip(self), err, fields(otel.kind = "client"))]
     pub async fn download(&self, download_id: &str) -> TolokaClientResult<Vec<u8>> {
         let response = self
             .client
@@ -84,6 +87,7 @@ impl TolokaClient {
         Ok(response.bytes().await?.to_vec())
     }
 
+    #[instrument(name = "toloka.get_watched_topics_meta", skip_all, err, fields(otel.kind = "client"))]
     async fn get_watched_topics_meta(&self) -> TolokaClientResult<Vec<TopicMeta>> {
         let response = self
             .client
@@ -101,6 +105,7 @@ impl TolokaClient {
         Ok(topics_meta)
     }
 
+    #[instrument(name = "toloka.get_download_meta", skip(self), err, fields(otel.kind = "client"))]
     async fn get_download_meta(&self, topic_id: &str) -> TolokaClientResult<Option<DownloadMeta>> {
         let response = self
             .client
@@ -118,8 +123,10 @@ impl TolokaClient {
         Ok(download_meta)
     }
 
+    #[instrument(name = "toloka.get_watched_topics", skip_all, err, fields(topics = tracing::field::Empty))]
     pub async fn get_watched_topics(&self) -> TolokaClientResult<Vec<Topic>> {
         let topics_meta = self.get_watched_topics_meta().await?;
+        Span::current().record("topics", topics_meta.len());
         let mut topics = vec![];
 
         for topic_meta in topics_meta.into_iter() {
@@ -138,6 +145,7 @@ impl TolokaClient {
         Ok(topics)
     }
 
+    #[instrument(name = "toloka.search", skip(self), err, fields(otel.kind = "client"))]
     pub async fn get_search_results_meta(&self, query: &str) -> TolokaClientResult<Vec<TopicMeta>> {
         let response = self
             .client
@@ -156,6 +164,7 @@ impl TolokaClient {
         Ok(results_meta)
     }
 
+    #[instrument(name = "toloka.add_bookmark", skip(self), err, fields(otel.kind = "client"))]
     pub async fn add_topic_to_bookmarks(&self, topic_id: &str) -> TolokaClientResult<()> {
         let response = self
             .client
@@ -171,6 +180,7 @@ impl TolokaClient {
         Ok(())
     }
 
+    #[instrument(name = "toloka.remove_bookmark", skip(self), err, fields(otel.kind = "client"))]
     pub async fn remove_topic_from_bookmarks(&self, topic_id: &str) -> TolokaClientResult<()> {
         let response = self
             .client

@@ -69,7 +69,7 @@ impl TransmissionClient {
         }
     }
 
-    #[instrument(err, skip(self, torrent_file_content))]
+    #[instrument(name = "transmission.add", err, skip(self, torrent_file_content), fields(otel.kind = "client"))]
     pub async fn add(
         &self,
         torrent_file_content: Vec<u8>,
@@ -103,7 +103,7 @@ impl TransmissionClient {
         }
     }
 
-    #[instrument(err, skip(self))]
+    #[instrument(name = "transmission.remove", err, skip(self), fields(otel.kind = "client"))]
     pub async fn remove(
         &self,
         torrent_id: &TorrentId,
@@ -129,7 +129,7 @@ impl TransmissionClient {
         Ok(())
     }
 
-    #[instrument(err, skip(self))]
+    #[instrument(name = "transmission.get_is_downloaded", err, skip(self), fields(otel.kind = "client"))]
     pub async fn get_is_downloaded(
         &self,
         torrent_id: &TorrentId,

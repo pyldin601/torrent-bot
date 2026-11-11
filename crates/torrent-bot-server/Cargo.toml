@@ -7,7 +7,7 @@ edition = "2021"
 actix-rt = "2.10.0"
 actix-web = { version = "4.8.0", features = ["rustls"] }
 tracing = "0.1.40"
-tracing-subscriber = "0.3.18"
+tracing-actix-web = { version = "0.7.25", features = ["opentelemetry_0_33"] }
 torrent-bot-clients = { version = "1.1.0", path = "../torrent-bot-clients" }
 serde = { version = "1.0.203", features = ["derive"] }
 futures-lite = "2.3.0"

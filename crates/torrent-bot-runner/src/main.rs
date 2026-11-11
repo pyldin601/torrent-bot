@@ -1,6 +1,6 @@
 use tracing::{error, Level};
-use tracing_subscriber::FmtSubscriber;
 
+use torrent_bot_clients::telemetry;
 use torrent_bot_clients::toloka::TolokaClient;
 use torrent_bot_clients::transmission::TransmissionClient;
 
@@ -22,11 +22,7 @@ async fn main() -> std::io::Result<()> {
         Config::from_env()
     };
 
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::DEBUG)
-        .finish();
-
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+    let mut telemetry = telemetry::init("torrent-bot-runner", Level::DEBUG);
 
     let storage = TaskDb::create(&config.storage_file).expect("Unable to initialize DB");
     let toloka_client = TolokaClient::create(&config.toloka.username, &config.toloka.password)
@@ -51,6 +47,8 @@ async fn main() -> std::io::Result<()> {
     .await
     {
         error!("Sync error: {:?}", error);
+        // process::exit skips destructors, so flush the spans of this run explicitly.
+        telemetry.shutdown();
         // Exit non-zero so the Kubernetes Job is marked as failed instead of Completed.
         std::process::exit(1);
     }
