@@ -2,7 +2,7 @@ use actix_rt::signal::unix;
 use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
 use futures_lite::FutureExt;
-use tracing::{error, info, Level};
+use tracing::{error, info, info_span, Instrument, Level};
 use tracing_actix_web::TracingLogger;
 
 use torrent_bot_clients::telegram::TelegramBotClient;
@@ -32,7 +32,10 @@ async fn main() -> std::io::Result<()> {
     let shutdown_timeout = config.shutdown_timeout.clone();
     let bind_address = config.bind_address.clone();
 
+    // A short root span for startup only: the process runs for weeks, and a span is exported only
+    // when it ends, so requests and bot commands get traces of their own instead.
     let toloka_client = TolokaClient::create(&config.toloka.username, &config.toloka.password)
+        .instrument(info_span!("startup"))
         .await
         .expect("Unable to initialize toloka client");
 
